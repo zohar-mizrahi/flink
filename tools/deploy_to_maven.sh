@@ -94,13 +94,26 @@ if [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_REPO_SLUG == "apache/flin
 	fi
 
 	if [[ $TRAVIS_JOB_NUMBER == *2 ]] && [[ $CURRENT_FLINK_VERSION == *SNAPSHOT* ]] ; then 
+		# the time to build and upload flink twice (scala 2.10 and scala 2.11) takes
+		# too much time. That's why we are going to do it in parallel
+		# Note that the parallel execution will cause the output to be interleaved
+		pwd
+		ls
+		mkdir ../flink2
+		ls ../
+		cp -r . ../flink2
+		cd ../flink2
+		pwd
+		ls
 		# deploy hadoop v2 (yarn)
-		echo "deploy standard version (hadoop2)"
-		mvn -B -DskipTests -Pdocs-and-source -Drat.skip=true -Drat.ignoreErrors=true clean deploy --settings deploysettings.xml;
+		echo "deploy standard version (hadoop2) for scala 2.10 from flink2 directory"
+		# do the hadoop2 scala 2.10 in the background
+		(mvn -B -DskipTests -Pdocs-and-source -Drat.skip=true -Drat.ignoreErrors=true clean deploy --settings deploysettings.xml; deploy_to_s3 $CURRENT_FLINK_VERSION "hadoop2" ) &
 
-		deploy_to_s3 $CURRENT_FLINK_VERSION "hadoop2"
-
-		echo "deploy hadoop2 version (standard) for scala 2.11"
+		# switch back to the regular flink directory
+		cd ../flink
+		pwd
+		echo "deploy hadoop2 version (standard) for scala 2.11 from flink directory"
 		./tools/change-scala-version.sh 2.11
 		mvn -B -DskipTests -Pdocs-and-source -Drat.skip=true -Drat.ignoreErrors=true clean deploy --settings deploysettings.xml;
 
