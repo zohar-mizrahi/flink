@@ -17,26 +17,28 @@
  */
 package org.apache.flink.python.api.jython;
 
-import org.python.util.PythonObjectInputStream;
+import org.apache.flink.api.common.functions.ReduceFunction;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
-public class SerializationUtils {
-	public static byte[] serializeObject(Object o) throws IOException {
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-			oos.writeObject(o);
-			oos.flush();
-			return baos.toByteArray();
-		}
+public class PythonReduceFunction implements ReduceFunction<byte[]> {
+	private static final long serialVersionUID = -9070596504893036458L;
+
+	private final byte[] serFun;
+	private transient ReduceFunction<Object> fun;
+
+	public PythonReduceFunction(ReduceFunction<Object> fun) throws IOException {
+		this.serFun = SerializationUtils.serializeObject(fun);
 	}
 
-	public static Object deserializeObject(byte[] bytes) throws IOException, ClassNotFoundException {
-		try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes); ObjectInputStream ois = new PythonObjectInputStream(bais)) {
-			return ois.readObject();
+	@Override
+	public byte[] reduce(byte[] value1, byte[] value2) throws Exception {
+		if (fun == null) {
+			fun = (ReduceFunction<Object>) SerializationUtils.deserializeObject(serFun);
 		}
+
+		Object result = this.fun.reduce(SerializationUtils.deserializeObject(value1), SerializationUtils.deserializeObject(value2));
+
+		return SerializationUtils.serializeObject(result);
 	}
 }

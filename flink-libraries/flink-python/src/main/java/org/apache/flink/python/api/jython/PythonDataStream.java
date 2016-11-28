@@ -17,15 +17,22 @@
  */
 package org.apache.flink.python.api.jython;
 
+import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.datastream.WindowedStream;
+import org.apache.flink.streaming.api.windowing.time.Time;
 
 import java.io.IOException;
 
-public class PythonDataStream {
-	private final DataStream stream;
+public class PythonDataStream<D extends DataStream> {
+	protected final D stream;
 
-	public PythonDataStream(DataStream stream) {
+	public PythonDataStream(D stream) {
 		this.stream = stream;
 	}
 
@@ -33,7 +40,52 @@ public class PythonDataStream {
 		return new PythonDataStream(stream.map(new PythonMapFunction(fun)));
 	}
 
+	public PythonDataStream flat_map(FlatMapFunction fun) throws IOException {
+		return new PythonDataStream(stream.flatMap(new PythonFlatMapFunction(fun)));
+	}
+
+	public PythonKeyedStream key_by(KeySelector selector) throws IOException {
+		return new PythonKeyedStream(stream.keyBy(new PythonKeySelector(selector)));
+	}
+
 	public void print() {
 		stream.map(new UtilityFunctions.DeserializerStringifyMap()).print();
+	}
+
+	public static class PythonKeyedStream extends PythonDataStream<KeyedStream> {
+
+		public PythonKeyedStream(KeyedStream stream) {
+			super(stream);
+		}
+
+		public PythonWindow count_window(long size, long slide) {
+			return new PythonWindow(stream.countWindow(size, slide));
+		}
+
+		public PythonWindow time_window(Time size) {
+			return new PythonWindow(stream.timeWindow(size));
+		}
+
+		public PythonWindow time_window(Time size, Time slide) {
+			return new PythonWindow(stream.timeWindow(size, slide));
+		}
+	}
+
+	public static class PythonSingleOutputStreamOperator extends PythonDataStream<SingleOutputStreamOperator> {
+		public PythonSingleOutputStreamOperator(SingleOutputStreamOperator stream) {
+			super(stream);
+		}
+	}
+
+	public static class PythonWindow {
+		private final WindowedStream stream;
+
+		public PythonWindow(WindowedStream stream) {
+			this.stream = stream;
+		}
+
+		public PythonSingleOutputStreamOperator reduce(ReduceFunction fun) throws IOException {
+			return new PythonSingleOutputStreamOperator(stream.reduce(new PythonReduceFunction(fun)));
+		}
 	}
 }

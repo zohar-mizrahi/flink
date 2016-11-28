@@ -18,6 +18,7 @@
 package org.apache.flink.python.api.jython;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.source.SourceFunction;
 
 public class PythonStreamExecutionEnvironment {
 	private final StreamExecutionEnvironment env;
@@ -34,7 +35,28 @@ public class PythonStreamExecutionEnvironment {
 		return new PythonDataStream(env.fromElements(elements).map(new UtilityFunctions.SerializerMap<>()));
 	}
 
+	public PythonDataStream create_predefined_java_source() {
+		return new PythonDataStream(env.addSource(new TempSource()).map(new UtilityFunctions.SerializerMap<>()));
+	}
+
 	public void execute() throws Exception {
 		this.env.execute();
+	}
+
+	public static class TempSource implements SourceFunction<Object> {
+
+		private boolean running = true;
+
+		@Override
+		public void run(SourceContext<Object> ctx) throws Exception {
+			while (running) {
+				ctx.collect("World");
+			}
+		}
+
+		@Override
+		public void cancel() {
+			running = false;
+		}
 	}
 }

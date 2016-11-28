@@ -17,26 +17,25 @@
  */
 package org.apache.flink.python.api.jython;
 
-import org.python.util.PythonObjectInputStream;
+import org.apache.flink.api.java.functions.KeySelector;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
-public class SerializationUtils {
-	public static byte[] serializeObject(Object o) throws IOException {
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-			oos.writeObject(o);
-			oos.flush();
-			return baos.toByteArray();
-		}
+public class PythonKeySelector implements KeySelector<byte[], PyKey> {
+	private static final long serialVersionUID = 7403775239671366607L;
+	private final byte[] serFun;
+	private transient KeySelector<Object, Object> fun;
+
+	public PythonKeySelector(KeySelector<Object, Object> fun) throws IOException {
+		this.serFun = SerializationUtils.serializeObject(fun);
 	}
 
-	public static Object deserializeObject(byte[] bytes) throws IOException, ClassNotFoundException {
-		try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes); ObjectInputStream ois = new PythonObjectInputStream(bais)) {
-			return ois.readObject();
+	@Override
+	public PyKey getKey(byte[] value) throws Exception {
+		if (fun == null) {
+			fun = (KeySelector<Object, Object>) SerializationUtils.deserializeObject(serFun);
 		}
+		Object key = fun.getKey(SerializationUtils.deserializeObject(value));
+		return new PyKey(SerializationUtils.serializeObject(key));
 	}
 }

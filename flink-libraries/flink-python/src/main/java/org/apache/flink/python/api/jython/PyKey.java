@@ -17,26 +17,34 @@
  */
 package org.apache.flink.python.api.jython;
 
-import org.python.util.PythonObjectInputStream;
+import java.util.Arrays;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+public class PyKey {
+	private byte[] data;
 
-public class SerializationUtils {
-	public static byte[] serializeObject(Object o) throws IOException {
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-			oos.writeObject(o);
-			oos.flush();
-			return baos.toByteArray();
-		}
+	public PyKey(byte[] data) {
+		this.data = data;
 	}
 
-	public static Object deserializeObject(byte[] bytes) throws IOException, ClassNotFoundException {
-		try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes); ObjectInputStream ois = new PythonObjectInputStream(bais)) {
-			return ois.readObject();
+
+	public byte[] getData() {
+		return data;
+	}
+
+	public void setData(byte[] data) {
+		this.data = data;
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (!(other instanceof PyKey)) {
+			return false;
 		}
+		return Arrays.equals(data, ((PyKey) other).data);
+	}
+
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(data);
 	}
 }

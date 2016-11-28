@@ -17,26 +17,27 @@
  */
 package org.apache.flink.python.api.jython;
 
-import org.python.util.PythonObjectInputStream;
+import org.apache.flink.util.Collector;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
-public class SerializationUtils {
-	public static byte[] serializeObject(Object o) throws IOException {
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-			oos.writeObject(o);
-			oos.flush();
-			return baos.toByteArray();
+public class PythonCollector implements Collector<Object> {
+	private Collector<byte[]> collector;
+
+	public void setCollector(Collector<byte[]> collector) {
+		this.collector = collector;
+	}
+
+	@Override
+	public void collect(Object record) {
+		try {
+			collector.collect(SerializationUtils.serializeObject(record));
+		} catch (IOException ignored) {
 		}
 	}
 
-	public static Object deserializeObject(byte[] bytes) throws IOException, ClassNotFoundException {
-		try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes); ObjectInputStream ois = new PythonObjectInputStream(bais)) {
-			return ois.readObject();
-		}
+	@Override
+	public void close() {
+		collector.close();
 	}
 }
