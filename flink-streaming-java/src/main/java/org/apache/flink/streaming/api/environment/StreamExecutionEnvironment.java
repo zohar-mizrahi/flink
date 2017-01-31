@@ -1624,6 +1624,22 @@ public abstract class StreamExecutionEnvironment {
 	/**
 	 * Creates a {@link LocalStreamEnvironment}. The local execution environment
 	 * will run the program in a multi-threaded fashion in the same JVM as the
+	 * environment was created in. The default parallelism of the local
+	 * environment is the number of hardware contexts (CPU cores / threads),
+	 * unless it was specified differently by {@link #setParallelism(int)}.
+	 *
+	 * @param configuration
+	 * 		Pass a custom configuration into the cluster
+	 * @return A local execution environment with the specified parallelism.
+	 */
+	public static LocalStreamEnvironment createLocalEnvironment(Configuration configuration) {
+		LocalStreamEnvironment currentEnvironment = new LocalStreamEnvironment(configuration);
+		return currentEnvironment;
+	}
+
+	/**
+	 * Creates a {@link LocalStreamEnvironment}. The local execution environment
+	 * will run the program in a multi-threaded fashion in the same JVM as the
 	 * environment was created in. It will use the parallelism specified in the
 	 * parameter.
 	 *
