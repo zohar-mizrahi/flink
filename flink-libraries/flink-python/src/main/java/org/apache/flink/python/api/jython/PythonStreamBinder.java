@@ -17,23 +17,52 @@
  */
 package org.apache.flink.python.api.jython;
 
+import org.apache.flink.api.java.utils.ParameterTool;
 import org.python.util.PythonInterpreter;
 
 import java.io.File;
 
 public class PythonStreamBinder {
+	final private static String defaultPythonScriptName = "run_all_tests.py";
+
 	private PythonStreamBinder() {
 	}
 
 	public static void main(String[] args) throws Exception {
-		PythonInterpreter.initialize(System.getProperties(), System.getProperties(), new String[0]);
+
+		File script = getPythonScriptPath(args);
+		args = prepend(args, script.getAbsolutePath());  // First argument in sys.argv is the script full path
+
+		PythonInterpreter.initialize(System.getProperties(), System.getProperties(), args);
 		try (PythonInterpreter interpreter = new PythonInterpreter()) {
 			interpreter.setErr(System.err);
 			interpreter.setOut(System.out);
 
-			File script = new File(PythonStreamBinder.class.getClassLoader().getResource("script.py").getFile());
 			interpreter.execfile(script.getAbsolutePath());
-			// interpreter.execfile(args[0]);
 		}
 	}
+
+	private static File getPythonScriptPath(String[] args) {
+		File script;
+		if (args.length > 0) {
+			if (args[0].startsWith("-")) {
+				final ParameterTool params = ParameterTool.fromArgs(args);
+				String scriptResource = params.get("script", defaultPythonScriptName);
+				script = new File(PythonStreamBinder.class.getClassLoader().getResource(scriptResource).getFile());
+			} else {
+				script = new File(args[0]);
+			}
+		} else {
+			script = new File(PythonStreamBinder.class.getClassLoader().getResource(defaultPythonScriptName).getFile());
+		}
+		return script;
+	}
+
+	private static String[] prepend(String[] a, String prepended) {
+		String[] c = new String[a.length+1];
+		c[0] = prepended;
+		System.arraycopy(a, 0, c, 1, a.length);
+		return c;
+	}
+
 }

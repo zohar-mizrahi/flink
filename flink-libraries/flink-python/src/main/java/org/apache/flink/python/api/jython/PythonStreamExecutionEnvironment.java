@@ -35,8 +35,8 @@ public class PythonStreamExecutionEnvironment {
 		return new PythonDataStream(env.fromElements(elements).map(new UtilityFunctions.SerializerMap<>()));
 	}
 
-	public PythonDataStream create_predefined_java_source() {
-		return new PythonDataStream(env.addSource(new TempSource()).map(new UtilityFunctions.SerializerMap<>()));
+	public PythonDataStream create_predefined_java_source(Integer num_iters) {
+		return new PythonDataStream(env.addSource(new TempSource(num_iters)).map(new UtilityFunctions.SerializerMap<>()));
 	}
 
 	public void execute() throws Exception {
@@ -46,10 +46,17 @@ public class PythonStreamExecutionEnvironment {
 	public static class TempSource implements SourceFunction<Object> {
 
 		private boolean running = true;
+		private Integer num_iters;
+
+		public TempSource(Integer num_iters) {
+			this.num_iters = num_iters;
+		}
 
 		@Override
 		public void run(SourceContext<Object> ctx) throws Exception {
-			while (running) {
+			Integer counter = 0;
+			boolean run_forever = (num_iters == -1);
+			while (running && (run_forever || counter++ < this.num_iters)){
 				ctx.collect("World");
 			}
 		}
