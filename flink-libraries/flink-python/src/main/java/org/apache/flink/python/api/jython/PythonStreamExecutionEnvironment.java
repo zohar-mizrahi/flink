@@ -17,6 +17,7 @@
  */
 package org.apache.flink.python.api.jython;
 
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 
@@ -27,8 +28,16 @@ public class PythonStreamExecutionEnvironment {
 		return new PythonStreamExecutionEnvironment();
 	}
 
+	public static PythonStreamExecutionEnvironment create_local_execution_environment(Configuration config) {
+		return new PythonStreamExecutionEnvironment(config);
+	}
+
 	private PythonStreamExecutionEnvironment() {
 		this.env = StreamExecutionEnvironment.getExecutionEnvironment();
+	}
+
+	private PythonStreamExecutionEnvironment(Configuration config) {
+		this.env = StreamExecutionEnvironment.createLocalEnvironment(config);
 	}
 
 	public PythonDataStream from_elements(Object... elements) {
