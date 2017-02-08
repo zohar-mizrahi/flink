@@ -74,6 +74,10 @@ public class PythonStreamExecutionEnvironment {
 		return new PythonDataStream(env.addSource(new PythonGenerator(src)).map(new UtilityFunctions.SerializerMap<>()));
 	}
 
+	public PythonDataStream socket_text_stream(String host, int port) {
+		return new PythonDataStream(env.socketTextStream(host, port).map(new UtilityFunctions.SerializerMap<String>()));
+	}
+
 	public void execute() throws Exception {
 		this.env.execute();
 	}
