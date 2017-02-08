@@ -54,6 +54,14 @@ public class PythonStreamExecutionEnvironment {
 		this.env.registerTypeWithKryoSerializer(PyObjectDerived.class, PyObjectSerializer.class);
 	}
 
+	public PythonDataStream create_predefined_java_source(Integer num_iters) {
+		return new PythonDataStream(env.addSource(new TempSource(num_iters)).map(new UtilityFunctions.SerializerMap<>()));
+	}
+
+	public PythonDataStream create_python_source(SourceFunction<Object> src) throws Exception {
+		return new PythonDataStream(env.addSource(new PythonGeneratorFunction(src)).map(new UtilityFunctions.SerializerMap<>()));
+	}
+
 	public PythonDataStream from_elements(PyObject... elements) {
 		return new PythonDataStream(env.fromElements(elements));
 	}
@@ -62,12 +70,15 @@ public class PythonStreamExecutionEnvironment {
 		return new PythonDataStream(env.addSource(new TempSource(num_iters)).map(new UtilityFunctions.SerializerMap<>()));
 	}
 
+	public PythonDataStream create_python_source(SourceFunction<Object> src) throws Exception {
+		return new PythonDataStream(env.addSource(new PythonGenerator(src)).map(new UtilityFunctions.SerializerMap<>()));
+	}
+
 	public void execute() throws Exception {
 		this.env.execute();
 	}
 
 	public static class TempSource implements SourceFunction<Object> {
-
 		private boolean running = true;
 		private Integer num_iters;
 
