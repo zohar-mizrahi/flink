@@ -20,25 +20,26 @@ package org.apache.flink.python.api.jython;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
+import org.python.core.PyObject;
 
 import java.io.IOException;
 
-public class PythonMapFunction extends RichMapFunction<byte[], byte[]> {
+public class PythonMapFunction extends RichMapFunction<PyObject, PyObject> {
 	private static final long serialVersionUID = 3001212087036451818L;
 	private final byte[] serFun;
-	private transient MapFunction<Object, Object> fun;
+	private transient MapFunction<PyObject, PyObject> fun;
 
-	public PythonMapFunction(MapFunction<Object, Object> fun) throws IOException {
+	public PythonMapFunction(MapFunction<PyObject, PyObject> fun) throws IOException {
 		this.serFun = SerializationUtils.serializeObject(fun);
 	}
 
 	@Override
 	public void open(Configuration config) throws IOException, ClassNotFoundException {
-		this.fun = (MapFunction<Object, Object>) SerializationUtils.deserializeObject(serFun);
+		this.fun = (MapFunction<PyObject, PyObject>) SerializationUtils.deserializeObject(serFun);
 	}
 
 	@Override
-	public byte[] map(byte[] value) throws Exception {
-		return SerializationUtils.serializeObject(this.fun.map(SerializationUtils.deserializeObject(value)));
+	public PyObject map(PyObject value) throws Exception {
+		return UtilityFunctions.adapt(this.fun.map(value));
 	}
 }

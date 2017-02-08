@@ -20,6 +20,11 @@ package org.apache.flink.python.api.jython;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.python.core.PyObject;
+import org.python.core.PyObjectDerived;
+import org.python.core.PyInteger;
+import org.python.core.PyTuple;
+import org.python.core.PyUnicode;
 
 public class PythonStreamExecutionEnvironment {
 	private final StreamExecutionEnvironment env;
@@ -34,14 +39,23 @@ public class PythonStreamExecutionEnvironment {
 
 	private PythonStreamExecutionEnvironment() {
 		this.env = StreamExecutionEnvironment.getExecutionEnvironment();
+		this.registerJythonSerializers();
 	}
 
 	private PythonStreamExecutionEnvironment(Configuration config) {
 		this.env = StreamExecutionEnvironment.createLocalEnvironment(config);
+		this.registerJythonSerializers();
 	}
 
-	public PythonDataStream from_elements(Object... elements) {
-		return new PythonDataStream(env.fromElements(elements).map(new UtilityFunctions.SerializerMap<>()));
+	private void registerJythonSerializers() {
+		this.env.registerTypeWithKryoSerializer(PyInteger.class, PyObjectSerializer.class);
+		this.env.registerTypeWithKryoSerializer(PyUnicode.class, PyObjectSerializer.class);
+		this.env.registerTypeWithKryoSerializer(PyTuple.class, PyObjectSerializer.class);
+		this.env.registerTypeWithKryoSerializer(PyObjectDerived.class, PyObjectSerializer.class);
+	}
+
+	public PythonDataStream from_elements(PyObject... elements) {
+		return new PythonDataStream(env.fromElements(elements));
 	}
 
 	public PythonDataStream create_predefined_java_source(Integer num_iters) {

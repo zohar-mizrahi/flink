@@ -18,26 +18,23 @@
 package org.apache.flink.python.api.jython;
 
 import org.apache.flink.util.Collector;
-
-import java.io.IOException;
+import org.python.core.PyObject;
 
 public class PythonCollector implements Collector<Object> {
-	private Collector<byte[]> collector;
+	private Collector<PyObject> collector;
 
-	public void setCollector(Collector<byte[]> collector) {
+	public void setCollector(Collector<PyObject> collector) {
 		this.collector = collector;
 	}
 
 	@Override
 	public void collect(Object record) {
-		try {
-			collector.collect(SerializationUtils.serializeObject(record));
-		} catch (IOException ignored) {
-		}
+		PyObject po = UtilityFunctions.adapt(record);
+		this.collector.collect(po);
 	}
 
 	@Override
 	public void close() {
-		collector.close();
+		this.collector.close();
 	}
 }

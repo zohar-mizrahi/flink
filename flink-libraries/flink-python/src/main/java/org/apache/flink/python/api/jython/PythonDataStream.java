@@ -49,7 +49,7 @@ public class PythonDataStream<D extends DataStream> {
 	}
 
 	public void print() {
-		stream.map(new UtilityFunctions.DeserializerStringifyMap()).print();
+		stream.print();
 	}
 
 	public static class PythonKeyedStream extends PythonDataStream<KeyedStream> {

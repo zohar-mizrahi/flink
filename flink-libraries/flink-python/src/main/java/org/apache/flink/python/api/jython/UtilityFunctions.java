@@ -17,27 +17,27 @@
  */
 package org.apache.flink.python.api.jython;
 
+import org.python.core.Py;
+import org.python.core.PyObject;
 import org.apache.flink.api.common.functions.MapFunction;
 
 public class UtilityFunctions {
 	private UtilityFunctions() {
 	}
 
-	public static class SerializerMap<IN> implements MapFunction<IN, byte[]> {
+	public static class SerializerMap<IN> implements MapFunction<IN, PyObject> {
 		private static final long serialVersionUID = 1582769662549499373L;
 
 		@Override
-		public byte[] map(IN value) throws Exception {
-			return SerializationUtils.serializeObject(value);
+		public PyObject map(IN value) throws Exception {
+			return Py.java2py(value);
 		}
 	}
 
-	public static class DeserializerStringifyMap implements MapFunction<byte[], String> {
-		private static final long serialVersionUID = -737690187885560482L;
-
-		@Override
-		public String map(byte[] value) throws Exception {
-			return SerializationUtils.deserializeObject(value).toString();
+	public static PyObject adapt(Object o) {
+		if (o instanceof PyObject) {
+			return (PyObject)o;
 		}
+		return  Py.java2py(o);
 	}
 }

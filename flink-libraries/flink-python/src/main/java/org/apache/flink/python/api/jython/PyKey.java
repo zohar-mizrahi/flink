@@ -17,21 +17,20 @@
  */
 package org.apache.flink.python.api.jython;
 
-import java.util.Arrays;
 
 public class PyKey {
-	private byte[] data;
+	private Object data;
 
-	public PyKey(byte[] data) {
+	public PyKey(Object data) {
 		this.data = data;
 	}
 
 
-	public byte[] getData() {
+	public Object getData() {
 		return data;
 	}
 
-	public void setData(byte[] data) {
+	public void setData(Object data) {
 		this.data = data;
 	}
 
@@ -40,11 +39,11 @@ public class PyKey {
 		if (!(other instanceof PyKey)) {
 			return false;
 		}
-		return Arrays.equals(data, ((PyKey) other).data);
+		return (((PyKey) other).data.equals(this.data));
 	}
 
 	@Override
 	public int hashCode() {
-		return Arrays.hashCode(data);
+		return data.hashCode();
 	}
 }

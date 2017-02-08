@@ -17,28 +17,27 @@
  */
 package org.apache.flink.python.api.jython;
 
-import org.apache.flink.api.common.functions.ReduceFunction;
-
 import java.io.IOException;
+import org.apache.flink.api.common.functions.ReduceFunction;
+import org.python.core.PyObject;
 
-public class PythonReduceFunction implements ReduceFunction<byte[]> {
+
+public class PythonReduceFunction implements ReduceFunction<PyObject> {
 	private static final long serialVersionUID = -9070596504893036458L;
 
 	private final byte[] serFun;
-	private transient ReduceFunction<Object> fun;
+	private transient ReduceFunction<PyObject> fun;
 
-	public PythonReduceFunction(ReduceFunction<Object> fun) throws IOException {
+	public PythonReduceFunction(ReduceFunction<PyObject> fun) throws IOException {
 		this.serFun = SerializationUtils.serializeObject(fun);
 	}
 
 	@Override
-	public byte[] reduce(byte[] value1, byte[] value2) throws Exception {
+	public PyObject reduce(PyObject value1, PyObject value2) throws Exception {
 		if (fun == null) {
-			fun = (ReduceFunction<Object>) SerializationUtils.deserializeObject(serFun);
+			fun = (ReduceFunction<PyObject>) SerializationUtils.deserializeObject(serFun);
 		}
 
-		Object result = this.fun.reduce(SerializationUtils.deserializeObject(value1), SerializationUtils.deserializeObject(value2));
-
-		return SerializationUtils.serializeObject(result);
+		return UtilityFunctions.adapt(this.fun.reduce(value1, value2));
 	}
 }

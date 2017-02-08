@@ -18,24 +18,25 @@
 package org.apache.flink.python.api.jython;
 
 import org.apache.flink.api.java.functions.KeySelector;
+import org.python.core.PyObject;
 
 import java.io.IOException;
 
-public class PythonKeySelector implements KeySelector<byte[], PyKey> {
+public class PythonKeySelector implements KeySelector<PyObject, PyKey> {
 	private static final long serialVersionUID = 7403775239671366607L;
 	private final byte[] serFun;
-	private transient KeySelector<Object, Object> fun;
+	private transient KeySelector<PyObject, Object> fun;
 
-	public PythonKeySelector(KeySelector<Object, Object> fun) throws IOException {
+	public PythonKeySelector(KeySelector<PyObject, PyKey> fun) throws IOException {
 		this.serFun = SerializationUtils.serializeObject(fun);
 	}
 
 	@Override
-	public PyKey getKey(byte[] value) throws Exception {
+	public PyKey getKey(PyObject value) throws Exception {
 		if (fun == null) {
-			fun = (KeySelector<Object, Object>) SerializationUtils.deserializeObject(serFun);
+			fun = (KeySelector<PyObject, Object>) SerializationUtils.deserializeObject(serFun);
 		}
-		Object key = fun.getKey(SerializationUtils.deserializeObject(value));
-		return new PyKey(SerializationUtils.serializeObject(key));
+		Object key = fun.getKey(value);
+		return new PyKey(key);
 	}
 }

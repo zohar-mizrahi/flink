@@ -21,10 +21,11 @@ import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
+import org.python.core.PyObject;
 
 import java.io.IOException;
 
-public class PythonFlatMapFunction extends RichFlatMapFunction<byte[], byte[]> {
+public class PythonFlatMapFunction extends RichFlatMapFunction<PyObject, PyObject> {
 	private static final long serialVersionUID = -6098432222172956477L;
 
 	private final byte[] serFun;
@@ -42,9 +43,8 @@ public class PythonFlatMapFunction extends RichFlatMapFunction<byte[], byte[]> {
 	}
 
 	@Override
-	public void flatMap(byte[] value, Collector<byte[]> out) throws Exception {
+	public void flatMap(PyObject value, Collector<PyObject> out) throws Exception {
 		this.collector.setCollector(out);
-
-		this.fun.flatMap(SerializationUtils.deserializeObject(value), collector);
+		this.fun.flatMap(value, this.collector);
 	}
 }
