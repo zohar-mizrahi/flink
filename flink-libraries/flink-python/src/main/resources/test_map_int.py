@@ -16,6 +16,7 @@
 # limitations under the License.
 ################################################################################
 import sys
+
 from pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import MapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector

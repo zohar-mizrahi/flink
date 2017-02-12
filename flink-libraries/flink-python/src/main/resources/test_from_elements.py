@@ -20,9 +20,8 @@ from pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
-from org.apache.flink.streaming.api.windowing.time.Time import seconds
+from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
 from org.apache.flink.api.java.utils import ParameterTool
-from org.apache.flink.streaming.api import CheckpointingMode
 
 
 class Generator(PyGeneratorBase):
@@ -49,20 +48,22 @@ class Selector(KeySelector):
 
 def main():
     params = ParameterTool.fromArgs(sys.argv[1:])
-    env = PythonStreamExecutionEnvironment.create_local_execution_environment(2, params.getConfiguration())
+    env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
 
-    env.enable_checkpointing(1000, CheckpointingMode.AT_LEAST_ONCE) \
-        .create_python_source(Generator()) \
+    elements = []
+    for iii in range(1000):
+        elements.append(111 if iii % 2 == 0 else 2222)
+
+    env.from_elements(*elements) \
         .flat_map(Tokenizer()) \
         .key_by(Selector()) \
-        .time_window(seconds(1)) \
+        .time_window(milliseconds(10)) \
         .reduce(Sum()) \
         .print()
 
     result = env.execute("MyJob")
-    print("Job completed, job_id={}".format(str(result.jobID)))
+    print("Job completed, job_id={}".format(result.jobID))
 
 
 if __name__ == '__main__':
     main()
-    print("Job completed ({})\n".format(sys.argv))

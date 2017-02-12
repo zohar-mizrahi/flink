@@ -15,52 +15,58 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
+import os
 import sys
-from pygeneratorbase import PyGeneratorBase
+import re
+import uuid
+
+from org.apache.flink.api.java.utils import ParameterTool
+from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
+from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
-from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
-from org.apache.flink.streaming.api.windowing.time.Time import seconds
-from org.apache.flink.api.java.utils import ParameterTool
-from org.apache.flink.streaming.api import CheckpointingMode
 
-
-class Generator(PyGeneratorBase):
-    def __init__(self):
-        super(Generator, self).__init__()
-
-    def do(self, ctx):
-        ctx.collect(222)
 
 class Tokenizer(FlatMapFunction):
     def flatMap(self, value, collector):
-        collector.collect((1, value))
+        for word in re.sub(r'\s', '', value).split(','):
+            collector.collect((1, word))
 
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
-        count1, val1 = input1
-        count2, val2 = input2
-        return (count1 + count2, val1)
+        count1, word1 = input1
+        count2, word2 = input2
+        return (count1 + count2, word1)
 
 class Selector(KeySelector):
     def getKey(self, input):
         return input[1]
 
 
+def generate_tmp_text_file(num_lines=100):
+    tmp_f = open("/tmp/{}".format(uuid.uuid4().get_hex()), 'w')
+    for iii in range(num_lines):
+        tmp_f.write('111, 222, 333, 444, 555, 666, 777\n')
+    return tmp_f
+
+
 def main():
-    params = ParameterTool.fromArgs(sys.argv[1:])
-    env = PythonStreamExecutionEnvironment.create_local_execution_environment(2, params.getConfiguration())
+    tmp_f = generate_tmp_text_file(1000)
+    try:
+        params = ParameterTool.fromArgs(sys.argv[1:])
+        env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
 
-    env.enable_checkpointing(1000, CheckpointingMode.AT_LEAST_ONCE) \
-        .create_python_source(Generator()) \
-        .flat_map(Tokenizer()) \
-        .key_by(Selector()) \
-        .time_window(seconds(1)) \
-        .reduce(Sum()) \
-        .print()
+        env.read_text_file(tmp_f.name) \
+            .flat_map(Tokenizer()) \
+            .key_by(Selector()) \
+            .time_window(milliseconds(100)) \
+            .reduce(Sum()) \
+            .print()
 
-    result = env.execute("MyJob")
-    print("Job completed, job_id={}".format(str(result.jobID)))
+        env.execute()
+    finally:
+        tmp_f.close()
+        os.unlink(tmp_f.name)
 
 
 if __name__ == '__main__':

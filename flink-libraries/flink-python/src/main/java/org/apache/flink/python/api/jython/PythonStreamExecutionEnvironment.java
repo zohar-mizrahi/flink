@@ -17,14 +17,22 @@
  */
 package org.apache.flink.python.api.jython;
 
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.python.core.PyObject;
-import org.python.core.PyObjectDerived;
+import org.python.core.PyString;
 import org.python.core.PyInteger;
-import org.python.core.PyTuple;
+import org.python.core.PyLong;
 import org.python.core.PyUnicode;
+import org.python.core.PyTuple;
+import org.python.core.PyObjectDerived;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
 
 import java.util.Iterator;
 
@@ -39,6 +47,25 @@ public class PythonStreamExecutionEnvironment {
 		return new PythonStreamExecutionEnvironment(config);
 	}
 
+	public static PythonStreamExecutionEnvironment create_local_execution_environment(int parallelism, Configuration config) {
+		return new PythonStreamExecutionEnvironment(parallelism, config);
+	}
+
+	public static PythonStreamExecutionEnvironment create_remote_execution_environment(
+		String host, int port, String... jarFiles) {
+		return new PythonStreamExecutionEnvironment(host, port, jarFiles);
+	}
+
+	public static PythonStreamExecutionEnvironment create_remote_execution_environment(
+		String host, int port, Configuration config, String... jarFiles) {
+		return new PythonStreamExecutionEnvironment(host, port, config, jarFiles);
+	}
+
+	public static PythonStreamExecutionEnvironment create_remote_execution_environment(
+		String host, int port, int parallelism, String... jarFiles) {
+		return new PythonStreamExecutionEnvironment(host, port, parallelism, jarFiles);
+	}
+
 	private PythonStreamExecutionEnvironment() {
 		this.env = StreamExecutionEnvironment.getExecutionEnvironment();
 		this.registerJythonSerializers();
@@ -49,8 +76,30 @@ public class PythonStreamExecutionEnvironment {
 		this.registerJythonSerializers();
 	}
 
+	private PythonStreamExecutionEnvironment(int parallelism, Configuration config) {
+		this.env = StreamExecutionEnvironment.createLocalEnvironment(parallelism, config);
+		this.registerJythonSerializers();
+	}
+
+	private PythonStreamExecutionEnvironment(String host, int port, String... jarFiles) {
+		this.env = StreamExecutionEnvironment.createRemoteEnvironment(host, port, jarFiles);
+		this.registerJythonSerializers();
+	}
+
+	private PythonStreamExecutionEnvironment(String host, int port, Configuration config, String... jarFiles) {
+		this.env = StreamExecutionEnvironment.createRemoteEnvironment(host, port, config, jarFiles);
+		this.registerJythonSerializers();
+	}
+
+	private PythonStreamExecutionEnvironment(String host, int port, int parallelism, String... jarFiles) {
+		this.env = StreamExecutionEnvironment.createRemoteEnvironment(host, port, parallelism, jarFiles);
+		this.registerJythonSerializers();
+	}
+
 	private void registerJythonSerializers() {
+		this.env.registerTypeWithKryoSerializer(PyString.class, PyObjectSerializer.class);
 		this.env.registerTypeWithKryoSerializer(PyInteger.class, PyObjectSerializer.class);
+		this.env.registerTypeWithKryoSerializer(PyLong.class, PyObjectSerializer.class);
 		this.env.registerTypeWithKryoSerializer(PyUnicode.class, PyObjectSerializer.class);
 		this.env.registerTypeWithKryoSerializer(PyTuple.class, PyObjectSerializer.class);
 		this.env.registerTypeWithKryoSerializer(PyObjectDerived.class, PyObjectSerializer.class);
@@ -68,12 +117,8 @@ public class PythonStreamExecutionEnvironment {
 		return new PythonDataStream(env.fromElements(elements));
 	}
 
-	public PythonDataStream create_predefined_java_source(Integer num_iters) {
-		return new PythonDataStream(env.addSource(new TempSource(num_iters)).map(new UtilityFunctions.SerializerMap<>()));
-	}
-
-	public PythonDataStream create_python_source(SourceFunction<Object> src) throws Exception {
-		return new PythonDataStream(env.addSource(new PythonGenerator(src)).map(new UtilityFunctions.SerializerMap<>()));
+	public PythonDataStream from_collection(Collection<Object> collection) {
+		return new PythonDataStream(env.fromCollection(collection).map(new UtilityFunctions.SerializerMap<>()));
 	}
 
 	public PythonDataStream from_collection(Iterator<Object> iter) throws Exception  {
@@ -81,12 +126,39 @@ public class PythonStreamExecutionEnvironment {
 			.map(new UtilityFunctions.SerializerMap<>()));
 	}
 
+	public PythonDataStream generate_sequence(long from, long to) {
+		return new PythonDataStream(env.generateSequence(from, to).map(new UtilityFunctions.SerializerMap<Long>()));
+	}
+
+	public PythonDataStream read_text_file(String path) throws IOException {
+		return new PythonDataStream(env.readTextFile(path).map(new UtilityFunctions.SerializerMap<String>()));
+	}
+
 	public PythonDataStream socket_text_stream(String host, int port) {
 		return new PythonDataStream(env.socketTextStream(host, port).map(new UtilityFunctions.SerializerMap<String>()));
 	}
 
-	public void execute() throws Exception {
-		this.env.execute();
+	public PythonStreamExecutionEnvironment enable_checkpointing(long interval) {
+		this.env.enableCheckpointing(interval);
+		return this;
+	}
+
+	public PythonStreamExecutionEnvironment enable_checkpointing(long interval, CheckpointingMode mode) {
+		this.env.enableCheckpointing(interval, mode);
+		return this;
+	}
+
+	public PythonStreamExecutionEnvironment set_parallelism(int parallelism) {
+		this.env.setParallelism(parallelism);
+		return this;
+	}
+
+	public JobExecutionResult execute() throws Exception {
+		return this.env.execute();
+	}
+
+	public JobExecutionResult execute(String job_name) throws Exception {
+		return this.env.execute(job_name);
 	}
 
 	public static class TempSource implements SourceFunction<Object> {
