@@ -26,6 +26,8 @@ import org.python.core.PyInteger;
 import org.python.core.PyTuple;
 import org.python.core.PyUnicode;
 
+import java.util.Iterator;
+
 public class PythonStreamExecutionEnvironment {
 	private final StreamExecutionEnvironment env;
 
@@ -72,6 +74,11 @@ public class PythonStreamExecutionEnvironment {
 
 	public PythonDataStream create_python_source(SourceFunction<Object> src) throws Exception {
 		return new PythonDataStream(env.addSource(new PythonGenerator(src)).map(new UtilityFunctions.SerializerMap<>()));
+	}
+
+	public PythonDataStream from_collection(Iterator<Object> iter) throws Exception  {
+		return new PythonDataStream(env.fromCollection(new PythonIteratorFunction(iter), Object.class)
+			.map(new UtilityFunctions.SerializerMap<>()));
 	}
 
 	public PythonDataStream socket_text_stream(String host, int port) {
