@@ -17,33 +17,19 @@
  */
 package org.apache.flink.python.api.jython;
 
-import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.streaming.api.datastream.WindowedStream;
 
 import java.io.IOException;
 
-public class PythonDataStream<D extends DataStream> {
-	protected final D stream;
+public class PythonWindowedStream {
+	private final WindowedStream stream;
 
-	public PythonDataStream(D stream) {
+	public PythonWindowedStream(WindowedStream stream) {
 		this.stream = stream;
 	}
 
-	public PythonDataStream map(MapFunction fun) throws IOException {
-		return new PythonDataStream(stream.map(new PythonMapFunction(fun)));
-	}
-
-	public PythonDataStream flat_map(FlatMapFunction fun) throws IOException {
-		return new PythonDataStream(stream.flatMap(new PythonFlatMapFunction(fun)));
-	}
-
-	public PythonKeyedStream key_by(KeySelector selector) throws IOException {
-		return new PythonKeyedStream(stream.keyBy(new PythonKeySelector(selector)));
-	}
-
-	public void print() {
-		stream.print();
+	public PythonSingleOutputStreamOperator reduce(ReduceFunction fun) throws IOException {
+		return new PythonSingleOutputStreamOperator(stream.reduce(new PythonReduceFunction(fun)));
 	}
 }
