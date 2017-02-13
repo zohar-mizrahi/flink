@@ -20,15 +20,31 @@ package org.apache.flink.python.api.jython;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.streaming.api.collector.selector.OutputSelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.python.core.PyObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class PythonDataStream<D extends DataStream> {
 	protected final D stream;
 
 	public PythonDataStream(D stream) {
 		this.stream = stream;
+	}
+
+	public PythonDataStream union(PythonDataStream... streams) {
+		ArrayList<DataStream> dsList = new ArrayList<>();
+		for (PythonDataStream ps : streams) {
+			dsList.add(ps.stream);
+		}
+		DataStream<PyObject>[] dsArray = new DataStream[dsList.size()];
+		return new PythonDataStream(stream.union(dsList.toArray(dsArray)));
+	}
+
+	public PythonSplitStream split(OutputSelector<PyObject> selector) throws IOException {
+		return new PythonSplitStream(this.stream.split(new PythonOutputSelector(selector)));
 	}
 
 	public PythonDataStream map(MapFunction fun) throws IOException {
