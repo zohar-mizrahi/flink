@@ -19,6 +19,7 @@ package org.apache.flink.python.api.jython;
 
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.streaming.api.datastream.WindowedStream;
+import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 
 import java.io.IOException;
 
@@ -31,5 +32,9 @@ public class PythonWindowedStream {
 
 	public PythonSingleOutputStreamOperator reduce(ReduceFunction fun) throws IOException {
 		return new PythonSingleOutputStreamOperator(stream.reduce(new PythonReduceFunction(fun)));
+	}
+
+	public PythonSingleOutputStreamOperator apply(WindowFunction fun) throws IOException {
+		return new PythonSingleOutputStreamOperator(stream.apply(new PythonApplyFunction(fun)));
 	}
 }
