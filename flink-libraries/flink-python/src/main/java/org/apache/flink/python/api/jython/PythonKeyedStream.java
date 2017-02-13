@@ -17,8 +17,11 @@
  */
 package org.apache.flink.python.api.jython;
 
+import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.windowing.time.Time;
+
+import java.io.IOException;
 
 
 public class PythonKeyedStream extends PythonDataStream<KeyedStream> {
@@ -37,5 +40,9 @@ public class PythonKeyedStream extends PythonDataStream<KeyedStream> {
 
 	public PythonWindowedStream time_window(Time size, Time slide) {
 		return new PythonWindowedStream(stream.timeWindow(size, slide));
+	}
+
+	public PythonSingleOutputStreamOperator reduce(ReduceFunction reducer) throws IOException {
+		return new PythonSingleOutputStreamOperator(stream.reduce(new PythonReduceFunction(reducer)));
 	}
 }
