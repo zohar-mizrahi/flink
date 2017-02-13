@@ -17,6 +17,7 @@
  */
 package org.apache.flink.python.api.jython;
 
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.functions.KeySelector;
@@ -45,6 +46,10 @@ public class PythonDataStream<D extends DataStream> {
 
 	public PythonSplitStream split(OutputSelector<PyObject> selector) throws IOException {
 		return new PythonSplitStream(this.stream.split(new PythonOutputSelector(selector)));
+	}
+
+	public PythonSingleOutputStreamOperator filter(FilterFunction<PyObject> filter) throws IOException {
+		return new PythonSingleOutputStreamOperator(stream.filter(new PythonFilterFunction(filter)));
 	}
 
 	public PythonDataStream map(MapFunction fun) throws IOException {
