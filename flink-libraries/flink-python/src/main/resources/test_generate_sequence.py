@@ -16,7 +16,6 @@
 # limitations under the License.
 ################################################################################
 import sys
-
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
@@ -28,11 +27,13 @@ class Tokenizer(FlatMapFunction):
     def flatMap(self, value, collector):
         collector.collect((1, value))
 
+
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
         count1, val1 = input1
         count2, val2 = input2
         return (count1 + count2, val1)
+
 
 class Selector(KeySelector):
     def getKey(self, input):

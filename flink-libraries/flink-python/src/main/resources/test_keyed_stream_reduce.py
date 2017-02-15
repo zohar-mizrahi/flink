@@ -16,31 +16,22 @@
 # limitations under the License.
 ################################################################################
 import sys
-
-from pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import ReduceFunction, FlatMapFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
 from org.apache.flink.api.java.utils import ParameterTool
 
 
-class Generator(PyGeneratorBase):
-    def __init__(self):
-        super(Generator, self).__init__()
-        self.alternator = True
-
-    def do(self, ctx):
-        ctx.collect((1, 222 if self.alternator else 333))
-        self.alternator = not self.alternator
-
 class Tokenizer(FlatMapFunction):
     def flatMap(self, value, collector):
         for v in value:
             collector.collect((1, v))
 
+
 class Selector(KeySelector):
     def getKey(self, input):
         return input[1]
+
 
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):

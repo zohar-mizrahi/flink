@@ -16,7 +16,6 @@
 # limitations under the License.
 ################################################################################
 import sys
-
 from pygeneratorbase import PyGeneratorBase
 from org.apache.flink.streaming.api.functions.windowing import WindowFunction
 from org.apache.flink.api.java.functions import KeySelector
@@ -26,21 +25,22 @@ from org.apache.flink.api.java.utils import ParameterTool
 
 
 class Generator(PyGeneratorBase):
-    def __init__(self):
-        super(Generator, self).__init__()
-        self.alternator = True
+    def __init__(self, num_iters):
+        super(Generator, self).__init__(num_iters)
+        self._alternator = True
 
     def do(self, ctx):
-        if self.alternator:
+        if self._alternator:
             ctx.collect(('key1', 'Any specific text here'))
         else:
             ctx.collect(('key2', 'Any other specific text here'))
-        self.alternator = not self.alternator
+        self._alternator = not self._alternator
 
 
 class Selector(KeySelector):
     def getKey(self, input):
         return input[0]
+
 
 class WindowSum(WindowFunction):
     def apply(self, key, window, values, collector):
@@ -51,7 +51,7 @@ def main():
     params = ParameterTool.fromArgs(sys.argv[1:])
     env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
 
-    env.create_python_source(Generator()) \
+    env.create_python_source(Generator(num_iters=7000)) \
         .key_by(Selector()) \
         .time_window(seconds(1)) \
         .apply(WindowSum()) \

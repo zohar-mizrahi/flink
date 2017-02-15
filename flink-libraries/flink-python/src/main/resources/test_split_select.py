@@ -16,7 +16,6 @@
 # limitations under the License.
 ################################################################################
 import sys
-
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.streaming.api.collector.selector import OutputSelector
 from org.apache.flink.api.java.functions import KeySelector
@@ -27,20 +26,20 @@ from org.apache.flink.api.java.utils import ParameterTool
 
 class StreamSelector(OutputSelector):
     def select(self, value):
-        if value < 500:
-            return ['lower_stream']
-        else:
-            return ['upper_stream']
+        return 'lower_stream' if value < 500 else 'upper_stream'
+
 
 class Tokenizer(FlatMapFunction):
     def flatMap(self, value, collector):
         collector.collect((1, value))
+
 
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
         count1, val1 = input1
         count2, val2 = input2
         return (count1 + count2, val1)
+
 
 class Selector(KeySelector):
     def getKey(self, input):

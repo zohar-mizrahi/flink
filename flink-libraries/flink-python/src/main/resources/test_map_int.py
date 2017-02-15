@@ -16,7 +16,6 @@
 # limitations under the License.
 ################################################################################
 import sys
-
 from pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import MapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
@@ -26,21 +25,24 @@ from org.apache.flink.api.java.utils import ParameterTool
 
 
 class Generator(PyGeneratorBase):
-    def __init__(self):
-        super(Generator, self).__init__()
-        self.alternator = True
+    def __init__(self, num_iters):
+        super(Generator, self).__init__(num_iters)
+        self._alternator = True
 
     def do(self, ctx):
-        ctx.collect(10 if self.alternator else -10)
-        self.alternator = not self.alternator
+        ctx.collect(10 if self._alternator else -10)
+        self._alternator = not self._alternator
+
 
 class Tokenizer(MapFunction):
     def map(self, value):
         return (1, 2 * value)
 
+
 class Selector(KeySelector):
     def getKey(self, input):
         return input[1]
+
 
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
@@ -53,7 +55,7 @@ def main():
     params = ParameterTool.fromArgs(sys.argv[1:])
     env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
 
-    env.create_python_source(Generator()) \
+    env.create_python_source(Generator(num_iters=7000)) \
         .map(Tokenizer()) \
         .key_by(Selector()) \
         .time_window(seconds(1)) \

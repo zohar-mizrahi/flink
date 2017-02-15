@@ -16,7 +16,6 @@
 # limitations under the License.
 ################################################################################
 import sys
-
 from java.util import NoSuchElementException
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
@@ -28,16 +27,16 @@ from org.apache.flink.api.java.utils import ParameterTool
 
 class SomeIterator(PythonIterator):
     def __init__(self, n):
-        self.i = 0
-        self.n = n
+        self._iii = 0
+        self._nnn = n
 
     def hasNext(self):
-        return self.i < self.n
+        return self._iii < self._nnn
 
     def next(self):
-        if self.i < self.n:
-            i = self.i
-            self.i += 1
+        if self._iii < self._nnn:
+            i = self._iii
+            self._iii += 1
             return 111 if i % 2 == 0 else 222
         else:
             raise NoSuchElementException()
@@ -47,11 +46,13 @@ class Tokenizer(FlatMapFunction):
     def flatMap(self, value, collector):
         collector.collect((1, value))
 
+
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
         count1, val1 = input1
         count2, val2 = input2
         return (count1 + count2, val1)
+
 
 class Selector(KeySelector):
     def getKey(self, input):

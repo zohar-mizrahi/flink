@@ -19,7 +19,6 @@ import os
 import sys
 import re
 import uuid
-
 from org.apache.flink.api.java.utils import ParameterTool
 from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
@@ -32,11 +31,13 @@ class Tokenizer(FlatMapFunction):
         for word in re.sub(r'\s', '', value).split(','):
             collector.collect((1, word))
 
+
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
         count1, word1 = input1
         count2, word2 = input2
         return (count1 + count2, word1)
+
 
 class Selector(KeySelector):
     def getKey(self, input):

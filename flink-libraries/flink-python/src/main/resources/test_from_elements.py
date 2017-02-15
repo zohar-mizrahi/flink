@@ -16,7 +16,6 @@
 # limitations under the License.
 ################################################################################
 import sys
-from pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
@@ -24,22 +23,17 @@ from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
 from org.apache.flink.api.java.utils import ParameterTool
 
 
-class Generator(PyGeneratorBase):
-    def __init__(self):
-        super(Generator, self).__init__()
-
-    def do(self, ctx):
-        ctx.collect(222)
-
 class Tokenizer(FlatMapFunction):
     def flatMap(self, value, collector):
         collector.collect((1, value))
+
 
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
         count1, val1 = input1
         count2, val2 = input2
         return (count1 + count2, val1)
+
 
 class Selector(KeySelector):
     def getKey(self, input):
@@ -50,9 +44,7 @@ def main():
     params = ParameterTool.fromArgs(sys.argv[1:])
     env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
 
-    elements = []
-    for iii in range(1000):
-        elements.append(111 if iii % 2 == 0 else 2222)
+    elements = [111 if iii % 2 == 0 else 2222 for iii in range(1000)]
 
     env.from_elements(*elements) \
         .flat_map(Tokenizer()) \

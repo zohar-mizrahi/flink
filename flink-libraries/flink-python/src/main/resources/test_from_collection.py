@@ -27,11 +27,13 @@ class Tokenizer(FlatMapFunction):
     def flatMap(self, value, collector):
         collector.collect((1, value))
 
+
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
         count1, val1 = input1
         count2, val2 = input2
         return (count1 + count2, val1)
+
 
 class Selector(KeySelector):
     def getKey(self, input):
@@ -42,9 +44,7 @@ def main():
     params = ParameterTool.fromArgs(sys.argv[1:])
     env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
 
-    elements = []
-    for iii in range(1000):
-        elements.append("aa" if iii % 2 == 0 else "bbb")
+    elements = ["aa" if iii % 2 == 0 else "bbb" for iii in range(1000)]
 
     env.from_collection(elements) \
         .flat_map(Tokenizer()) \

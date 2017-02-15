@@ -25,8 +25,8 @@ from org.apache.flink.api.java.utils import ParameterTool
 
 
 class Generator(PyGeneratorBase):
-    def __init__(self):
-        super(Generator, self).__init__()
+    def __init__(self, num_iters):
+        super(Generator, self).__init__(num_iters)
 
     def do(self, ctx):
         ctx.collect([222, 333])
@@ -37,11 +37,13 @@ class Tokenizer(FlatMapFunction):
         for v in value:
             collector.collect((1, v))
 
+
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
         count1, val1 = input1
         count2, val2 = input2
         return (count1 + count2, val1)
+
 
 class Selector(KeySelector):
     def getKey(self, input):
@@ -52,7 +54,7 @@ def main():
     params = ParameterTool.fromArgs(sys.argv[1:])
     env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
 
-    env.create_python_source(Generator()) \
+    env.create_python_source(Generator(num_iters=7000)) \
         .flat_map(Tokenizer()) \
         .key_by(Selector()) \
         .time_window(seconds(1)) \

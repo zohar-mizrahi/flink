@@ -26,21 +26,24 @@ from org.apache.flink.streaming.api import CheckpointingMode
 
 
 class Generator(PyGeneratorBase):
-    def __init__(self):
-        super(Generator, self).__init__()
+    def __init__(self, num_iters):
+        super(Generator, self).__init__(num_iters)
 
     def do(self, ctx):
         ctx.collect(222)
 
+
 class Tokenizer(FlatMapFunction):
     def flatMap(self, value, collector):
         collector.collect((1, value))
+
 
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
         count1, val1 = input1
         count2, val2 = input2
         return (count1 + count2, val1)
+
 
 class Selector(KeySelector):
     def getKey(self, input):
@@ -52,7 +55,7 @@ def main():
     env = PythonStreamExecutionEnvironment.create_local_execution_environment(2, params.getConfiguration())
 
     env.enable_checkpointing(1000, CheckpointingMode.AT_LEAST_ONCE) \
-        .create_python_source(Generator()) \
+        .create_python_source(Generator(num_iters=7000)) \
         .flat_map(Tokenizer()) \
         .key_by(Selector()) \
         .time_window(seconds(1)) \

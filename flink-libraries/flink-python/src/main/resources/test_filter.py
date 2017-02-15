@@ -16,7 +16,6 @@
 # limitations under the License.
 ################################################################################
 import sys
-
 from pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction, FilterFunction
 from org.apache.flink.api.java.functions import KeySelector
@@ -26,28 +25,32 @@ from org.apache.flink.api.java.utils import ParameterTool
 
 
 class Generator(PyGeneratorBase):
-    def __init__(self):
-        super(Generator, self).__init__()
-        self.alternator = True
+    def __init__(self, num_iters):
+        super(Generator, self).__init__(num_iters)
+        self._alternator = True
 
     def do(self, ctx):
-        ctx.collect('Hello' if self.alternator else 'World')
-        self.alternator = not self.alternator
+        ctx.collect('Hello' if self._alternator else 'World')
+        self._alternator = not self._alternator
+
 
 class Filterer(FilterFunction):
     def filter(self, value):
         return value == 'Hello'
+
 
 class Tokenizer(FlatMapFunction):
     def flatMap(self, value, collector):
         for word in value.lower().split():
             collector.collect((1, word))
 
+
 class Sum(ReduceFunction):
     def reduce(self, input1, input2):
         count1, word1 = input1
         count2, word2 = input2
         return (count1 + count2, word1)
+
 
 class Selector(KeySelector):
     def getKey(self, input):
@@ -58,7 +61,7 @@ def main():
     params = ParameterTool.fromArgs(sys.argv[1:])
     env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
 
-    env.create_python_source(Generator()) \
+    env.create_python_source(Generator(num_iters=7000)) \
         .filter(Filterer()) \
         .flat_map(Tokenizer()) \
         .key_by(Selector()) \
