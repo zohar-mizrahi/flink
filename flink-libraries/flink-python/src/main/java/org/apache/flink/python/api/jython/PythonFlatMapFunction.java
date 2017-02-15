@@ -19,6 +19,7 @@ package org.apache.flink.python.api.jython;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
+import org.apache.flink.api.common.functions.RichFunction;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
 import org.python.core.PyObject;
@@ -37,9 +38,19 @@ public class PythonFlatMapFunction extends RichFlatMapFunction<PyObject, PyObjec
 	}
 
 	@Override
-	public void open(Configuration config) throws IOException, ClassNotFoundException {
+	public void open(Configuration config) throws Exception {
 		this.fun = (FlatMapFunction<Object, Object>) SerializationUtils.deserializeObject(serFun);
+		if (this.fun instanceof RichFunction) {
+			((RichFlatMapFunction)this.fun).open(config);
+		}
 		this.collector = new PythonCollector();
+	}
+
+	@Override
+	public void close() throws Exception {
+		if (this.fun instanceof RichFunction) {
+			((RichFlatMapFunction)this.fun).close();
+		}
 	}
 
 	@Override

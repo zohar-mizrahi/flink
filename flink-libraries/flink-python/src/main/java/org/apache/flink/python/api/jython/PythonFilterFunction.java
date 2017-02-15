@@ -19,6 +19,7 @@ package org.apache.flink.python.api.jython;
 
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.RichFilterFunction;
+import org.apache.flink.api.common.functions.RichFunction;
 import org.apache.flink.configuration.Configuration;
 import org.python.core.PyObject;
 
@@ -35,10 +36,19 @@ public class PythonFilterFunction extends RichFilterFunction<PyObject> {
 	}
 
 	@Override
-	public void open(Configuration parameters) throws IOException, ClassNotFoundException{
+	public void open(Configuration parameters) throws Exception {
 		this.fun = (FilterFunction<PyObject>) SerializationUtils.deserializeObject(this.serFun);
+		if (this.fun instanceof RichFunction) {
+			((RichFilterFunction)this.fun).open(parameters);
+		}
 	}
 
+	@Override
+	public void close() throws Exception {
+		if (this.fun instanceof RichFunction) {
+			((RichFilterFunction)this.fun).close();
+		}
+	}
 
 	@Override
 	public boolean filter(PyObject value) throws Exception {

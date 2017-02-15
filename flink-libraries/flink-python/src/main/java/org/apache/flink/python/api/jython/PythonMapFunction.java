@@ -18,6 +18,7 @@
 package org.apache.flink.python.api.jython;
 
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.RichFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
 import org.python.core.PyObject;
@@ -34,8 +35,18 @@ public class PythonMapFunction extends RichMapFunction<PyObject, PyObject> {
 	}
 
 	@Override
-	public void open(Configuration config) throws IOException, ClassNotFoundException {
+	public void open(Configuration config) throws Exception {
 		this.fun = (MapFunction<PyObject, PyObject>) SerializationUtils.deserializeObject(serFun);
+		if (this.fun instanceof RichFunction) {
+			((RichMapFunction)this.fun).open(config);
+		}
+	}
+
+	@Override
+	public void close() throws Exception {
+		if (this.fun instanceof RichFunction) {
+			((RichMapFunction)this.fun).close();
+		}
 	}
 
 	@Override
