@@ -15,12 +15,10 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-import sys
+from python_test_base import TestBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
-from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
-from org.apache.flink.api.java.utils import ParameterTool
 
 
 class Tokenizer(FlatMapFunction):
@@ -40,20 +38,22 @@ class Selector(KeySelector):
         return 1
 
 
-def main():
-    params = ParameterTool.fromArgs(sys.argv[1:])
-    env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
+class Main(TestBase):
+    def __init__(self):
+        super(Main, self).__init__()
 
-    env.generate_sequence(1, 1000) \
-        .flat_map(Tokenizer()) \
-        .key_by(Selector()) \
-        .time_window(milliseconds(10)) \
-        .reduce(Sum()) \
-        .print()
+    def run(self):
+        env = self._get_execution_environment()
+        env.generate_sequence(1, 1000) \
+            .flat_map(Tokenizer()) \
+            .key_by(Selector()) \
+            .time_window(milliseconds(10)) \
+            .reduce(Sum()) \
+            .print()
 
-    result = env.execute("MyJob")
-    print("Job completed, job_id={}".format(result.jobID))
+        result = env.execute("MyJob")
+        print("Job completed, job_id={}".format(result.jobID))
 
 
 if __name__ == '__main__':
-    main()
+    Main().run()

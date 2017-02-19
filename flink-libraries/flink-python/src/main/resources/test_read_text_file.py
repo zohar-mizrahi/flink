@@ -19,8 +19,7 @@ import os
 import sys
 import re
 import uuid
-from org.apache.flink.api.java.utils import ParameterTool
-from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
+from python_test_base import TestBase
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
@@ -51,25 +50,27 @@ def generate_tmp_text_file(num_lines=100):
     return tmp_f
 
 
-def main():
-    tmp_f = generate_tmp_text_file(1000)
-    try:
-        params = ParameterTool.fromArgs(sys.argv[1:])
-        env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
+class Main(TestBase):
+    def __init__(self):
+        super(Main, self).__init__()
 
-        env.read_text_file(tmp_f.name) \
-            .flat_map(Tokenizer()) \
-            .key_by(Selector()) \
-            .time_window(milliseconds(100)) \
-            .reduce(Sum()) \
-            .print()
+    def run(self):
+        tmp_f = generate_tmp_text_file(1000)
+        try:
+            env = self._get_execution_environment()
+            env.read_text_file(tmp_f.name) \
+                .flat_map(Tokenizer()) \
+                .key_by(Selector()) \
+                .time_window(milliseconds(100)) \
+                .reduce(Sum()) \
+                .print()
 
-        env.execute()
-    finally:
-        tmp_f.close()
-        os.unlink(tmp_f.name)
+            env.execute()
+        finally:
+            tmp_f.close()
+            os.unlink(tmp_f.name)
 
 
 if __name__ == '__main__':
-    main()
+    Main().run()
     print("Job completed ({})\n".format(sys.argv))

@@ -19,9 +19,9 @@ import sys
 import threading
 import socket
 import time
+from python_test_base import TestBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
-from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
 from org.apache.flink.streaming.api.windowing.time.Time import seconds
 
 
@@ -66,23 +66,25 @@ class Selector(KeySelector):
     def getKey(self, input):
         return input[1]
 
+class Main(TestBase):
+    def __init__(self):
+        super(Main, self).__init__()
 
-def main():
-    SocketStringGenerator(host='', port=PORT, msg='Hello World', num_iters=15000).start()
-    time.sleep(0.5)
+    def run(self):
+        SocketStringGenerator(host='', port=PORT, msg='Hello World', num_iters=15000).start()
+        time.sleep(0.5)
 
-    env = PythonStreamExecutionEnvironment.get_execution_environment()
+        env = self._get_execution_environment()
+        env.socket_text_stream('localhost', PORT) \
+            .flat_map(Tokenizer()) \
+            .key_by(Selector()) \
+            .time_window(seconds(1)) \
+            .reduce(Sum()) \
+            .print()
 
-    env.socket_text_stream('localhost', PORT) \
-        .flat_map(Tokenizer()) \
-        .key_by(Selector()) \
-        .time_window(seconds(1)) \
-        .reduce(Sum()) \
-        .print()
-
-    env.execute()
+        env.execute()
 
 
 if __name__ == '__main__':
-    main()
+    Main().run()
     print("Job completed ({})\n".format(sys.argv))

@@ -15,33 +15,21 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-from os.path import dirname, join, basename
-from glob import glob
 import sys
-import excludes
+from org.apache.flink.api.java.utils import ParameterTool
+from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
 
-tests = []
-pwd = dirname(sys.argv[0])
 
-for x in glob(join(pwd, 'test_*.py')):
-    if not x.startswith('__'):
-        test_module_name = basename(x)[:-3]
-        if test_module_name not in excludes.excluded_tests:
-            tests.append(__import__(test_module_name, globals(), locals()))
+class TestBase(object):
+    _params = ParameterTool.fromArgs(sys.argv[1:]) if len(sys.argv[1:]) > 0 else None
 
-failed_tests = []
-for test in tests:
-    print("Submitting job ... {}".format(test.__name__))
-    try:
-        test.Main().run()
-        print("Job completed ({})\n".format(test.__name__))
-    except Exception as ex:
-        failed_tests.append(test.__name__)
-        print("\n{}\n{}\n{}\n".format('#'*len(ex.message), ex.message, '#'*len(ex.message)))
+    def __init__(self):
+        pass
 
-if failed_tests:
-    print("\nThe following tests were failed:")
-    for failed_test in failed_tests:
-        print("\t* " + failed_test)
-else:
-    print("\n*** All tests passed successfully ***")
+    def _get_execution_environment(self):
+        if TestBase._params:
+            print("Create local execution environment with provided configurations")
+            return PythonStreamExecutionEnvironment.create_local_execution_environment(TestBase._params.getConfiguration())
+        else:
+            print("Get execution environment")
+            return PythonStreamExecutionEnvironment.get_execution_environment()

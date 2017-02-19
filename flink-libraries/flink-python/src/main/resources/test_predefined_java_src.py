@@ -16,9 +16,9 @@
 # limitations under the License.
 ################################################################################
 import sys
+from python_test_base import TestBase
 from org.apache.flink.api.common.functions import MapFunction, FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
-from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
 from org.apache.flink.streaming.api.windowing.time.Time import seconds
 
 
@@ -45,19 +45,22 @@ class Selector(KeySelector):
         return input[1]
 
 
-def main():
-    env = PythonStreamExecutionEnvironment.get_execution_environment()
+class Main(TestBase):
+    def __init__(self):
+        super(Main, self).__init__()
 
-    env.create_predefined_java_source(7000) \
-        .flat_map(Tokenizer()) \
-        .key_by(Selector()) \
-        .time_window(seconds(1)) \
-        .reduce(Sum()) \
-        .print()
+    def run(self):
+        env = self._get_execution_environment()
+        env.create_predefined_java_source(7000) \
+            .flat_map(Tokenizer()) \
+            .key_by(Selector()) \
+            .time_window(seconds(1)) \
+            .reduce(Sum()) \
+            .print()
 
-    env.execute()
+        env.execute()
 
 
 if __name__ == '__maine__':
-    main()
+    Main().run()
     print("Job completed ({})\n".format(sys.argv))

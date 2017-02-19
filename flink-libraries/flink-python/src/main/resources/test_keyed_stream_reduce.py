@@ -16,10 +16,9 @@
 # limitations under the License.
 ################################################################################
 import sys
+from python_test_base import TestBase
 from org.apache.flink.api.common.functions import ReduceFunction, FlatMapFunction
 from org.apache.flink.api.java.functions import KeySelector
-from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
-from org.apache.flink.api.java.utils import ParameterTool
 
 
 class Tokenizer(FlatMapFunction):
@@ -40,23 +39,25 @@ class Sum(ReduceFunction):
         return (count1 + count2, val1)
 
 
-def main():
-    params = ParameterTool.fromArgs(sys.argv[1:])
-    env = PythonStreamExecutionEnvironment.create_local_execution_environment(2, params.getConfiguration())
+class Main(TestBase):
+    def __init__(self):
+        super(Main, self).__init__()
 
-    elements = [(1, 222 if x % 2 == 0 else 333) for x in range(10)]
+    def run(self):
+        elements = [(1, 222 if x % 2 == 0 else 333) for x in range(10)]
 
-    env.set_parallelism(2) \
-        .from_elements(elements) \
-        .flat_map(Tokenizer()) \
-        .key_by(Selector()) \
-        .reduce(Sum()) \
-        .print()
+        env = self._get_execution_environment()
+        env.set_parallelism(2) \
+            .from_elements(elements) \
+            .flat_map(Tokenizer()) \
+            .key_by(Selector()) \
+            .reduce(Sum()) \
+            .print()
 
-    result = env.execute("MyJob")
-    print("Job completed, job_id={}".format(str(result.jobID)))
+        result = env.execute("MyJob")
+        print("Job completed, job_id={}".format(str(result.jobID)))
 
 
 if __name__ == '__main__':
-    main()
+    Main().run()
     print("Job completed ({})\n".format(sys.argv))

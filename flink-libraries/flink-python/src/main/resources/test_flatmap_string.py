@@ -16,12 +16,11 @@
 # limitations under the License.
 ################################################################################
 import sys
+from python_test_base import TestBase
 from pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
-from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
 from org.apache.flink.streaming.api.windowing.time.Time import seconds
-from org.apache.flink.api.java.utils import ParameterTool
 
 
 class Generator(PyGeneratorBase):
@@ -50,20 +49,22 @@ class Selector(KeySelector):
         return input[1]
 
 
-def main():
-    params = ParameterTool.fromArgs(sys.argv[1:])
-    env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
+class Main(TestBase):
+    def __init__(self):
+        super(Main, self).__init__()
 
-    env.create_python_source(Generator(num_iters=7000)) \
-        .flat_map(Tokenizer()) \
-        .key_by(Selector()) \
-        .time_window(seconds(1)) \
-        .reduce(Sum()) \
-        .print()
+    def run(self):
+        env = self._get_execution_environment()
+        env.create_python_source(Generator(num_iters=7000)) \
+            .flat_map(Tokenizer()) \
+            .key_by(Selector()) \
+            .time_window(seconds(1)) \
+            .reduce(Sum()) \
+            .print()
 
-    env.execute()
+        env.execute()
 
 
 if __name__ == '__main__':
-    main()
+    Main().run()
     print("Job completed ({})\n".format(sys.argv))

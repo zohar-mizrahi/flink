@@ -15,13 +15,11 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-import sys
+from python_test_base import TestBase
 from pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
-from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
-from org.apache.flink.api.java.utils import ParameterTool
 
 
 class Generator(PyGeneratorBase):
@@ -48,25 +46,26 @@ class Selector(KeySelector):
     def getKey(self, input):
         return 1
 
+class Main(TestBase):
+    def __init__(self):
+        super(Main, self).__init__()
 
-def main():
-    params = ParameterTool.fromArgs(sys.argv[1:])
-    env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
+    def run(self):
+        env = self._get_execution_environment()
+        seq1 = env.create_python_source(Generator(msg='Hello', num_iters=7000))
+        seq2 = env.create_python_source(Generator(msg='World', num_iters=7000))
+        seq3 = env.create_python_source(Generator(msg='Happy', num_iters=7000))
 
-    seq1 = env.create_python_source(Generator(msg='Hello', num_iters=7000))
-    seq2 = env.create_python_source(Generator(msg='World', num_iters=7000))
-    seq3 = env.create_python_source(Generator(msg='Happy', num_iters=7000))
+        seq1.union(seq2, seq3) \
+            .flat_map(Tokenizer()) \
+            .key_by(Selector()) \
+            .time_window(milliseconds(10)) \
+            .reduce(Sum()) \
+            .print()
 
-    seq1.union(seq2, seq3) \
-        .flat_map(Tokenizer()) \
-        .key_by(Selector()) \
-        .time_window(milliseconds(10)) \
-        .reduce(Sum()) \
-        .print()
-
-    result = env.execute("My python union stream test")
-    print("Job completed, job_id={}".format(result.jobID))
+        result = env.execute("My python union stream test")
+        print("Job completed, job_id={}".format(result.jobID))
 
 
 if __name__ == '__main__':
-    main()
+    Main().run()

@@ -15,12 +15,10 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-import sys
+from python_test_base import TestBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
-from org.apache.flink.python.api.jython import PythonStreamExecutionEnvironment
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
-from org.apache.flink.api.java.utils import ParameterTool
 
 
 class Tokenizer(FlatMapFunction):
@@ -40,22 +38,24 @@ class Selector(KeySelector):
         return input[1]
 
 
-def main():
-    params = ParameterTool.fromArgs(sys.argv[1:])
-    env = PythonStreamExecutionEnvironment.create_local_execution_environment(params.getConfiguration())
+class Main(TestBase):
+    def __init__(self):
+        super(Main, self).__init__()
 
-    elements = ["aa" if iii % 2 == 0 else "bbb" for iii in range(1000)]
+    def run(self):
+        elements = ["aa" if iii % 2 == 0 else "bbb" for iii in range(1000)]
 
-    env.from_collection(elements) \
-        .flat_map(Tokenizer()) \
-        .key_by(Selector()) \
-        .time_window(milliseconds(10)) \
-        .reduce(Sum()) \
-        .print()
+        env = self._get_execution_environment()
+        env.from_collection(elements) \
+            .flat_map(Tokenizer()) \
+            .key_by(Selector()) \
+            .time_window(milliseconds(10)) \
+            .reduce(Sum()) \
+            .print()
 
-    result = env.execute("MyJob")
-    print("Job completed, job_id={}".format(result.jobID))
+        result = env.execute("MyJob")
+        print("Job completed, job_id={}".format(result.jobID))
 
 
 if __name__ == '__main__':
-    main()
+    Main().run()
