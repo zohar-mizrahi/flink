@@ -21,6 +21,7 @@ import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.flink.streaming.api.collector.selector.OutputSelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.python.core.PyObject;
@@ -67,4 +68,8 @@ public class PythonDataStream<D extends DataStream> {
 	public void print() {
 		stream.print();
 	}
+
+	public void write_as_text(String path) { stream.writeAsText(path); }
+
+	public void write_as_text(String path, WriteMode mode) { stream.writeAsText(path, mode); }
 }
