@@ -24,6 +24,7 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.flink.streaming.api.collector.selector.OutputSelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.util.serialization.SerializationSchema;
 import org.python.core.PyObject;
 
 import java.io.IOException;
@@ -72,4 +73,8 @@ public class PythonDataStream<D extends DataStream> {
 	public void write_as_text(String path) { stream.writeAsText(path); }
 
 	public void write_as_text(String path, WriteMode mode) { stream.writeAsText(path, mode); }
+
+	public void write_to_socket(String host, Integer port, SerializationSchema schema) throws IOException {
+		stream.writeToSocket(host, port, new PythonSerializationSchema(schema));
+	}
 }
