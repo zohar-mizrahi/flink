@@ -21,13 +21,10 @@ import socket
 import time
 from utils import constants
 from utils.python_test_base import TestBase
+from utils import utils
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.streaming.api.windowing.time.Time import seconds
-
-
-PORT = 9999
-
 
 class SocketStringGenerator(threading.Thread):
     def __init__(self, host, port, msg, num_iters):
@@ -72,11 +69,12 @@ class Main(TestBase):
         super(Main, self).__init__()
 
     def run(self):
-        SocketStringGenerator(host='', port=PORT, msg='Hello World', num_iters=constants.NUM_ITERATIONS_IN_TEST).start()
+        f_port = utils.gen_free_port()
+        SocketStringGenerator(host='', port=f_port, msg='Hello World', num_iters=constants.NUM_ITERATIONS_IN_TEST).start()
         time.sleep(0.5)
 
         env = self._get_execution_environment()
-        env.socket_text_stream('localhost', PORT) \
+        env.socket_text_stream('localhost', f_port) \
             .flat_map(Tokenizer()) \
             .key_by(Selector()) \
             .time_window(seconds(1)) \

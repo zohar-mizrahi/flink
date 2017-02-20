@@ -18,6 +18,7 @@
 import threading
 import socket
 import time
+from utils import utils
 from utils import constants
 from utils.python_test_base import TestBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
@@ -76,8 +77,10 @@ class Main(TestBase):
     def __init__(self):
         super(Main, self).__init__()
 
+
     def run(self):
-        SocketStringReader('', 9999, constants.NUM_ITERATIONS_IN_TEST).start()
+        port = utils.gen_free_port()
+        SocketStringReader('', port, constants.NUM_ITERATIONS_IN_TEST).start()
         time.sleep(0.5)
 
         elements = ["aa" if iii % 2 == 0 else "bbb" for iii in range(constants.NUM_ITERATIONS_IN_TEST)]
@@ -88,11 +91,10 @@ class Main(TestBase):
             .key_by(Selector()) \
             .time_window(milliseconds(50)) \
             .reduce(Sum()) \
-            .write_to_socket('localhost', 9999, ToStringSchema())
+            .write_to_socket('localhost', port, ToStringSchema())
 
         result = env.execute("MyJob")
         print("Job completed, job_id={}".format(result.jobID))
-
 
 if __name__ == '__main__':
     Main().run()
