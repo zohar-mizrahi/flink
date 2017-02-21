@@ -77,4 +77,10 @@ public class PythonDataStream<D extends DataStream> {
 	public void write_to_socket(String host, Integer port, SerializationSchema schema) throws IOException {
 		stream.writeToSocket(host, port, new PythonSerializationSchema(schema));
 	}
+
+	public PythonIterativeStream iterate() { return new PythonIterativeStream(this.stream.iterate()); }
+
+	public PythonIterativeStream iterate(Long max_wait_time_ms) {
+		return new PythonIterativeStream(this.stream.iterate(max_wait_time_ms));
+	}
 }
