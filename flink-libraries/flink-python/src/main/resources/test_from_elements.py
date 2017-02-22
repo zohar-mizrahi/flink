@@ -15,7 +15,8 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-from python_test_base import TestBase
+from utils import constants
+from utils.python_test_base import TestBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
@@ -43,7 +44,7 @@ class Main(TestBase):
         super(Main, self).__init__()
 
     def run(self):
-        elements = [111 if iii % 2 == 0 else 2222 for iii in range(1000)]
+        elements = [111 if iii % 2 == 0 else 2222 for iii in range(constants.NUM_ELEMENTS_IN_TEST)]
 
         env = self._get_execution_environment()
         env.from_elements(*elements) \

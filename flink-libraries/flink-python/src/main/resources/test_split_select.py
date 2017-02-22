@@ -15,7 +15,8 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-from python_test_base import TestBase
+from utils import constants
+from utils.python_test_base import TestBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.streaming.api.collector.selector import OutputSelector
 from org.apache.flink.api.java.functions import KeySelector
@@ -24,7 +25,7 @@ from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
 
 class StreamSelector(OutputSelector):
     def select(self, value):
-        return 'lower_stream' if value < 500 else 'upper_stream'
+        return 'lower_stream' if value < constants.NUM_ITERATIONS_IN_TEST / 2 else 'upper_stream'
 
 
 class Tokenizer(FlatMapFunction):
@@ -50,7 +51,7 @@ class Main(TestBase):
     def run(self):
         env = self._get_execution_environment()
 
-        split_window = env.generate_sequence(1, 1000).split(StreamSelector())
+        split_window = env.generate_sequence(1, constants.NUM_ITERATIONS_IN_TEST).split(StreamSelector())
 
         split_window.select('lower_stream') \
             .flat_map(Tokenizer()) \

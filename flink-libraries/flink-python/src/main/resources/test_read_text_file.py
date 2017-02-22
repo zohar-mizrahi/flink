@@ -19,7 +19,8 @@ import os
 import sys
 import re
 import uuid
-from python_test_base import TestBase
+from utils import constants
+from utils.python_test_base import TestBase
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
@@ -55,7 +56,7 @@ class Main(TestBase):
         super(Main, self).__init__()
 
     def run(self):
-        tmp_f = generate_tmp_text_file(1000)
+        tmp_f = generate_tmp_text_file(constants.NUM_ELEMENTS_IN_TEST)
         try:
             env = self._get_execution_environment()
             env.read_text_file(tmp_f.name) \

@@ -15,7 +15,8 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-from python_test_base import TestBase
+from utils import constants
+from utils.python_test_base import TestBase
 from org.apache.flink.api.common.functions import FilterFunction
 from org.apache.flink.api.common.functions import MapFunction
 
@@ -43,7 +44,7 @@ class Main(TestBase):
         env = self._get_execution_environment()
         some_integers = env.from_collection([2] * 5)
 
-        iterative_stream = some_integers.iterate(2000)
+        iterative_stream = some_integers.iterate(constants.MAX_EXECUTION_TIME_MS)
 
         minus_one_stream = iterative_stream.map(MinusOne())
 

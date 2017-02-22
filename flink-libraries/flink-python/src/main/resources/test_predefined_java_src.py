@@ -16,7 +16,8 @@
 # limitations under the License.
 ################################################################################
 import sys
-from python_test_base import TestBase
+from utils import constants
+from utils.python_test_base import TestBase
 from org.apache.flink.api.common.functions import MapFunction, FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.streaming.api.windowing.time.Time import seconds
@@ -51,7 +52,7 @@ class Main(TestBase):
 
     def run(self):
         env = self._get_execution_environment()
-        env.create_predefined_java_source(7000) \
+        env.create_predefined_java_source(constants.NUM_ITERATIONS_IN_TEST) \
             .flat_map(Tokenizer()) \
             .key_by(Selector()) \
             .time_window(seconds(1)) \

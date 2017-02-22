@@ -16,8 +16,9 @@
 # limitations under the License.
 ################################################################################
 import sys
-from python_test_base import TestBase
-from pygeneratorbase import PyGeneratorBase
+from utils import constants
+from utils.python_test_base import TestBase
+from utils.pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction, FilterFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
@@ -62,7 +63,7 @@ class Main(TestBase):
 
     def run(self):
         env = self._get_execution_environment()
-        env.create_python_source(Generator(num_iters=7000)) \
+        env.create_python_source(Generator(num_iters=constants.NUM_ITERATIONS_IN_TEST)) \
             .filter(Filterer()) \
             .flat_map(Tokenizer()) \
             .key_by(Selector()) \

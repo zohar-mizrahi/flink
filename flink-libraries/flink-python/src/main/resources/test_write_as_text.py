@@ -15,7 +15,8 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-from python_test_base import TestBase
+from utils import constants
+from utils.python_test_base import TestBase
 from org.apache.flink.core.fs.FileSystem import WriteMode
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
@@ -44,7 +45,7 @@ class Main(TestBase):
         super(Main, self).__init__()
 
     def run(self):
-        elements = ["aa" if iii % 2 == 0 else "bbb" for iii in range(1000)]
+        elements = ["aa" if iii % 2 == 0 else "bbb" for iii in range(constants.NUM_ITERATIONS_IN_TEST)]
 
         env = self._get_execution_environment()
         env.from_collection(elements) \

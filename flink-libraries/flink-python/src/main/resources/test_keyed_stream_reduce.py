@@ -16,7 +16,8 @@
 # limitations under the License.
 ################################################################################
 import sys
-from python_test_base import TestBase
+from utils import constants
+from utils.python_test_base import TestBase
 from org.apache.flink.api.common.functions import ReduceFunction, FlatMapFunction
 from org.apache.flink.api.java.functions import KeySelector
 
@@ -44,7 +45,7 @@ class Main(TestBase):
         super(Main, self).__init__()
 
     def run(self):
-        elements = [(1, 222 if x % 2 == 0 else 333) for x in range(10)]
+        elements = [(1, 222 if x % 2 == 0 else 333) for x in range(constants.NUM_ELEMENTS_IN_TEST)]
 
         env = self._get_execution_environment()
         env.set_parallelism(2) \

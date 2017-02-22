@@ -19,7 +19,8 @@ import sys
 import threading
 import socket
 import time
-from python_test_base import TestBase
+from utils import constants
+from utils.python_test_base import TestBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.streaming.api.windowing.time.Time import seconds
@@ -71,7 +72,7 @@ class Main(TestBase):
         super(Main, self).__init__()
 
     def run(self):
-        SocketStringGenerator(host='', port=PORT, msg='Hello World', num_iters=15000).start()
+        SocketStringGenerator(host='', port=PORT, msg='Hello World', num_iters=constants.NUM_ITERATIONS_IN_TEST).start()
         time.sleep(0.5)
 
         env = self._get_execution_environment()

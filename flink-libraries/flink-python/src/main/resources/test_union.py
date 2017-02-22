@@ -15,8 +15,9 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-from python_test_base import TestBase
-from pygeneratorbase import PyGeneratorBase
+from utils import constants
+from utils.python_test_base import TestBase
+from utils.pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
@@ -52,9 +53,9 @@ class Main(TestBase):
 
     def run(self):
         env = self._get_execution_environment()
-        seq1 = env.create_python_source(Generator(msg='Hello', num_iters=7000))
-        seq2 = env.create_python_source(Generator(msg='World', num_iters=7000))
-        seq3 = env.create_python_source(Generator(msg='Happy', num_iters=7000))
+        seq1 = env.create_python_source(Generator(msg='Hello', num_iters=constants.NUM_ITERATIONS_IN_TEST))
+        seq2 = env.create_python_source(Generator(msg='World', num_iters=constants.NUM_ITERATIONS_IN_TEST))
+        seq3 = env.create_python_source(Generator(msg='Happy', num_iters=constants.NUM_ITERATIONS_IN_TEST))
 
         seq1.union(seq2, seq3) \
             .flat_map(Tokenizer()) \

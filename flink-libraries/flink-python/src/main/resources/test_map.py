@@ -16,12 +16,11 @@
 # limitations under the License.
 ################################################################################
 import sys
-from python_test_base import TestBase
-from pygeneratorbase import PyGeneratorBase
+from utils.python_test_base import TestBase
+from utils.pygeneratorbase import PyGeneratorBase
 from org.apache.flink.api.common.functions import MapFunction, FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
-from org.apache.flink.streaming.api import CheckpointingMode
 
 
 class Generator(PyGeneratorBase):

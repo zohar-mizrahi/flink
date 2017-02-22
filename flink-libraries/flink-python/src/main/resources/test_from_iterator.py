@@ -15,12 +15,13 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-from java.util import NoSuchElementException
-from python_test_base import TestBase
+from utils import constants
+from utils.python_test_base import TestBase
 from org.apache.flink.api.common.functions import FlatMapFunction, ReduceFunction
 from org.apache.flink.api.java.functions import KeySelector
 from org.apache.flink.python.api.jython import PythonIterator
 from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
+from java.util import NoSuchElementException
 
 
 class SomeIterator(PythonIterator):
@@ -63,7 +64,7 @@ class Main(TestBase):
 
     def run(self):
         env = self._get_execution_environment()
-        env.from_collection(SomeIterator(1000)) \
+        env.from_collection(SomeIterator(constants.NUM_ITERATIONS_IN_TEST)) \
             .flat_map(Tokenizer()) \
             .key_by(Selector()) \
             .time_window(milliseconds(10)) \
