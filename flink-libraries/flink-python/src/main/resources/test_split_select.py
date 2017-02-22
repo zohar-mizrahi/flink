@@ -25,7 +25,7 @@ from org.apache.flink.streaming.api.windowing.time.Time import milliseconds
 
 class StreamSelector(OutputSelector):
     def select(self, value):
-        return 'lower_stream' if value < constants.NUM_ITERATIONS_IN_TEST / 2 else 'upper_stream'
+        return ['lower_stream'] if value < constants.NUM_ITERATIONS_IN_TEST / 2 else ['upper_stream']
 
 
 class Tokenizer(FlatMapFunction):
