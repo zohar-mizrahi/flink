@@ -18,7 +18,7 @@
 from os.path import dirname, join, basename
 from glob import glob
 import sys
-import excludes
+from org.apache.flink.runtime.client import JobExecutionException
 
 tests = []
 pwd = dirname(sys.argv[0])
@@ -26,8 +26,7 @@ pwd = dirname(sys.argv[0])
 for x in glob(join(pwd, 'test_*.py')):
     if not x.startswith('__'):
         test_module_name = basename(x)[:-3]
-        if test_module_name not in excludes.excluded_tests:
-            tests.append(__import__(test_module_name, globals(), locals()))
+        tests.append(__import__(test_module_name, globals(), locals()))
 
 failed_tests = []
 for test in tests:
@@ -35,13 +34,19 @@ for test in tests:
     try:
         test.Main().run()
         print("Job completed ({})\n".format(test.__name__))
-    except Exception as ex:
+    except JobExecutionException as ex:
         failed_tests.append(test.__name__)
         print("\n{}\n{}\n{}\n".format('#'*len(ex.message), ex.message, '#'*len(ex.message)))
+    except:
+        failed_tests.append(test.__name__)
+        ex_type = sys.exc_info()[0]
+        print("\n{}\n{}\n{}\n".format('#'*len(ex_type), ex_type, '#'*len(ex_type)))
+
 
 if failed_tests:
     print("\nThe following tests were failed:")
     for failed_test in failed_tests:
         print("\t* " + failed_test)
+    raise Exception("\nFailed test(s): {}".format(failed_tests))
 else:
     print("\n*** All tests passed successfully ***")
