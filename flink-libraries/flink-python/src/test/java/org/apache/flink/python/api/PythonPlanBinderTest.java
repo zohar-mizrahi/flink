@@ -34,7 +34,7 @@ public class PythonPlanBinderTest extends JavaProgramTestBase {
 	private static String findUtilsFile() throws Exception {
 		FileSystem fs = FileSystem.getLocalFileSystem();
 		return fs.getWorkingDirectory().toString()
-				+ "/src/test/python/org/apache/flink/python/api/utils/utils.py";
+				+ "/src/test/python/org/apache/flink/python/api/batch/utils/utils.py";
 	}
 
 	private static List<String> findTestFiles() throws Exception {
@@ -42,7 +42,7 @@ public class PythonPlanBinderTest extends JavaProgramTestBase {
 		FileSystem fs = FileSystem.getLocalFileSystem();
 		FileStatus[] status = fs.listStatus(
 				new Path(fs.getWorkingDirectory().toString()
-						+ "/src/test/python/org/apache/flink/python/api"));
+						+ "/src/test/python/org/apache/flink/python/api/batch"));
 		for (FileStatus f : status) {
 			String file = f.getPath().toString();
 			if (file.endsWith(".py")) {

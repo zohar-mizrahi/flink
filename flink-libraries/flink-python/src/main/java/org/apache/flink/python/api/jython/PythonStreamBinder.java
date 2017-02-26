@@ -16,59 +16,44 @@
  * limitations under the License.
  */
 package org.apache.flink.python.api.jython;
-
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.python.util.PythonInterpreter;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Properties;
 
 public class PythonStreamBinder {
-	final private static String defaultPythonScriptName = "run_all_tests.py";
 
 	private PythonStreamBinder() {
 	}
 
+	/**
+	 * Entry point for the execution of a python streaming task.
+	 *
+	 * @param args <pathToScript> [parameter1]..[parameterX]
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
-
-		File script = getPythonScriptPath(args);
-		if (isFirstArgAnOption(args)) {
-			args = prepend(args, script.getAbsolutePath());  // First argument in sys.argv is the script full path
+		File script;
+		if (args.length < 1) {
+			System.out.println("Usage: prog <pathToScript> [parameter1]..[parameterX]");
+			return;
 		}
+		else {
+			script = new File(args[0]);
+			if ((!script.exists()) || (!script.isFile()))
+			{
+				throw new FileNotFoundException("Could not find file: " + args[0]);
+			}
 
-		PythonInterpreter.initialize(System.getProperties(), System.getProperties(), args);
+		}
+		Properties props = System.getProperties();
+		props.put("python.path", script.getParent());
+		PythonInterpreter.initialize(props, props, args);
 		try (PythonInterpreter interpreter = new PythonInterpreter()) {
 			interpreter.setErr(System.err);
 			interpreter.setOut(System.out);
-
 			interpreter.execfile(script.getAbsolutePath());
 		}
 	}
-
-	private static File getPythonScriptPath(String[] args) {
-		File script;
-		if (args.length > 0) {
-			if (isFirstArgAnOption(args)) {
-				final ParameterTool params = ParameterTool.fromArgs(args);
-				String scriptResource = params.get("script", defaultPythonScriptName);
-				script = new File(PythonStreamBinder.class.getClassLoader().getResource(scriptResource).getFile());
-			} else {
-				script = new File(args[0]);
-			}
-		} else {
-			script = new File(PythonStreamBinder.class.getClassLoader().getResource(defaultPythonScriptName).getFile());
-		}
-		return script;
-	}
-
-	private static boolean isFirstArgAnOption(String[] args) {
-		return args.length > 0 && args[0].startsWith("-");
-	}
-
-	private static String[] prepend(String[] a, String prepended) {
-		String[] c = new String[a.length+1];
-		c[0] = prepended;
-		System.arraycopy(a, 0, c, 1, a.length);
-		return c;
-	}
-
 }

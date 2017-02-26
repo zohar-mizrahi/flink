@@ -57,7 +57,7 @@ if __name__ == "__main__":
         .map_partition(Verify(range(1000), "ZipWithIndex")).output()
 
     #CSV Source/Sink
-    csv_data = env.read_csv("src/test/python/org/apache/flink/python/api/data_csv", (INT, INT, STRING))
+    csv_data = env.read_csv("src/test/python/org/apache/flink/python/api/batch/data_csv", (INT, INT, STRING))
 
     out = "flink_python_" + str(uuid4())
     csv_data.write_csv("/tmp/flink/" + out, line_delimiter="\n", field_delimiter="|", write_mode=WriteMode.OVERWRITE)
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     d8.write_csv("/tmp/flink/" + out, line_delimiter="\n", field_delimiter="|", write_mode=WriteMode.OVERWRITE)
 
     #Text Source/Sink
-    text_data = env.read_text("src/test/python/org/apache/flink/python/api/data_text")
+    text_data = env.read_text("src/test/python/org/apache/flink/python/api/batch/data_text")
 
     out = "flink_python_" + str(uuid4())
     text_data.write_text("/tmp/flink/" + out, WriteMode.OVERWRITE)
