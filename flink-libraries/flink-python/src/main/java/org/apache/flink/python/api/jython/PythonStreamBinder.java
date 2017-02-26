@@ -31,7 +31,9 @@ public class PythonStreamBinder {
 	public static void main(String[] args) throws Exception {
 
 		File script = getPythonScriptPath(args);
-		args = prepend(args, script.getAbsolutePath());  // First argument in sys.argv is the script full path
+		if (isFirstArgAnOption(args)) {
+			args = prepend(args, script.getAbsolutePath());  // First argument in sys.argv is the script full path
+		}
 
 		PythonInterpreter.initialize(System.getProperties(), System.getProperties(), args);
 		try (PythonInterpreter interpreter = new PythonInterpreter()) {
@@ -45,7 +47,7 @@ public class PythonStreamBinder {
 	private static File getPythonScriptPath(String[] args) {
 		File script;
 		if (args.length > 0) {
-			if (args[0].startsWith("-")) {
+			if (isFirstArgAnOption(args)) {
 				final ParameterTool params = ParameterTool.fromArgs(args);
 				String scriptResource = params.get("script", defaultPythonScriptName);
 				script = new File(PythonStreamBinder.class.getClassLoader().getResource(scriptResource).getFile());
@@ -56,6 +58,10 @@ public class PythonStreamBinder {
 			script = new File(PythonStreamBinder.class.getClassLoader().getResource(defaultPythonScriptName).getFile());
 		}
 		return script;
+	}
+
+	private static boolean isFirstArgAnOption(String[] args) {
+		return args.length > 0 && args[0].startsWith("-");
 	}
 
 	private static String[] prepend(String[] a, String prepended) {
