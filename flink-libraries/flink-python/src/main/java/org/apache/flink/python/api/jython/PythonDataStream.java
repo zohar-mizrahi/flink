@@ -24,6 +24,7 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.flink.streaming.api.collector.selector.OutputSelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.util.serialization.SerializationSchema;
 import org.python.core.PyObject;
 
@@ -76,6 +77,10 @@ public class PythonDataStream<D extends DataStream> {
 
 	public void write_to_socket(String host, Integer port, SerializationSchema schema) throws IOException {
 		stream.writeToSocket(host, port, new PythonSerializationSchema(schema));
+	}
+
+	public void add_sink(SinkFunction fun) throws IOException {
+		stream.addSink(new PythonSinkFunction(fun));
 	}
 
 	public PythonIterativeStream iterate() { return new PythonIterativeStream(this.stream.iterate()); }
