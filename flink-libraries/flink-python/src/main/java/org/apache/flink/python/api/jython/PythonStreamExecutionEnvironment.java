@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-import java.util.Iterator;
 
 public class PythonStreamExecutionEnvironment {
 	private final StreamExecutionEnvironment env;
@@ -111,6 +110,16 @@ public class PythonStreamExecutionEnvironment {
 
 	public PythonDataStream create_python_source(SourceFunction<Object> src) throws Exception {
 		return new PythonDataStream(env.addSource(new PythonGeneratorFunction(src)).map(new UtilityFunctions.SerializerMap<>()));
+	}
+
+	/**
+	 * Add java source, which is a java class that provided by Flink as a built-in API (e.g. Kafka connector)
+	 *
+	 * @param src  a built-in java class, which functions as a source (e.g. PythonFlinkKafkaConsumer09)
+	 * @return python data stream
+	 */
+	public PythonDataStream add_java_source(SourceFunction<Object> src) {
+		return new PythonDataStream(env.addSource(src).map(new UtilityFunctions.SerializerMap<>()));
 	}
 
 	public PythonDataStream from_elements(PyObject... elements) {
