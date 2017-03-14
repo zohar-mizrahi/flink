@@ -19,7 +19,10 @@ package org.apache.flink.python.api.jython;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.core.fs.Path;
+import org.apache.flink.runtime.filecache.FileCache;
 import org.apache.flink.streaming.api.CheckpointingMode;
+import org.apache.flink.streaming.api.environment.LocalStreamEnvironment;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.python.core.PyObject;
@@ -30,7 +33,9 @@ import org.python.core.PyUnicode;
 import org.python.core.PyTuple;
 import org.python.core.PyObjectDerived;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -163,12 +168,64 @@ public class PythonStreamExecutionEnvironment {
 	}
 
 	public JobExecutionResult execute() throws Exception {
+		return execute(false);
+	}
+
+	public JobExecutionResult execute(Boolean local) throws Exception {
+		if (PythonEnvironmentConfig.pythonTmpCachePath == null) {
+			// Nothing to be done! Is is executed on the task manager.
+			return new JobExecutionResult(null, 0, null);
+		}
+		distributeFiles(PythonEnvironmentConfig.pythonTmpCachePath, local);
+
 		return this.env.execute();
 	}
 
 	public JobExecutionResult execute(String job_name) throws Exception {
+		return execute(job_name, false)	;
+	}
+
+	public JobExecutionResult execute(String job_name, Boolean local) throws Exception {
+		if (PythonEnvironmentConfig.pythonTmpCachePath == null) {
+			// Nothing to be done! Is is executed on the task manager.
+			return new JobExecutionResult(null, 0, null);
+		}
+		distributeFiles(PythonEnvironmentConfig.pythonTmpCachePath, local);
+
 		return this.env.execute(job_name);
 	}
+
+	private void distributeFiles(String tmpPath, boolean local) throws IOException, URISyntaxException
+	{
+		if (local || this.env instanceof LocalStreamEnvironment) {
+			PythonEnvironmentConfig.FLINK_HDFS_PATH =  System.getProperty("java.io.tmpdir") + File.separator + "flink";
+		}
+		FileCache.clearPath(PythonEnvironmentConfig.FLINK_HDFS_PATH);
+		FileCache.copy(new Path(tmpPath), new Path(PythonEnvironmentConfig.FLINK_HDFS_PATH), true);
+		// cleanupDest(PythonEnvironmentConfig.FLINK_HDFS_PATH);
+		this.env.registerCachedFile(PythonEnvironmentConfig.FLINK_HDFS_PATH, PythonEnvironmentConfig.FLINK_PYTHON_DC_ID);
+		// FileCache.clearPath(tmpPath);
+	}
+
+//	private void cleanupDest(String destPath) {
+//		File root = new File(destPath);
+//		File[] list = root.listFiles();
+//
+//		if (list == null) {
+//			return;
+//		}
+//
+//		for (File f : list) {
+//			if (f.isDirectory()) {
+//				cleanupDest(f.getAbsolutePath());
+//			} else {
+//				String ext = FilenameUtils.getExtension(f.getName());
+//				if (!ext.equals("py")) {
+//					f.delete();
+//				}
+//			}
+//		}
+//	}
 
 	public static class TempSource implements SourceFunction<Object> {
 		private boolean running = true;

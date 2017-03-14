@@ -17,11 +17,21 @@
  */
 package org.apache.flink.python.api.jython;
 
+import org.apache.flink.api.common.functions.RuntimeContext;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.python.util.PythonInterpreter;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
+
+// import static org.python.core.PySystemState.registry;
 
 public class UtilityFunctions {
+	private static boolean jythonInitialized = false;
+
 	private UtilityFunctions() {
 	}
 
@@ -39,5 +49,41 @@ public class UtilityFunctions {
 			return (PyObject)o;
 		}
 		return  Py.java2py(o);
+	}
+
+	public static synchronized Object smartFunctionDeserialization(RuntimeContext runtimeCtx, byte[] serFun) throws IOException, ClassNotFoundException {
+		File path = runtimeCtx.getDistributedCache().getFile(PythonEnvironmentConfig.FLINK_PYTHON_DC_ID);
+		System.out.println(String.format("Cached Path: %s", path.getParent()));
+		if (!jythonInitialized) {
+			/**
+			 * We have to initialise the jython interpreter before any call to jython related functions,
+			 * otherwise the default initialisation would be called and thus the proper python path
+			 * would not be set.
+			 */
+			// File path = runtimeCtx.getDistributedCache().getFile(PythonEnvironmentConfig.FLINK_PYTHON_DC_ID);
+			UtilityFunctions.initPythonInterpreter(new File(path.getPath() + File.separator + "plan.py"));
+			jythonInitialized = true;
+		}
+
+		try {
+			return SerializationUtils.deserializeObject(serFun);
+		} catch (Exception e) {
+			// File path = runtimeCtx.getDistributedCache().getFile(PythonEnvironmentConfig.FLINK_PYTHON_DC_ID);
+			// PySystemState.add_classdir(path.getPath());
+			UtilityFunctions.initPythonInterpreter(new File(path.getPath() + File.separator + "plan.py"));
+			return SerializationUtils.deserializeObject(serFun);
+		}
+	}
+
+	public static void initPythonInterpreter(File scriptFullPath) {
+		Properties postProperties = new Properties();
+		postProperties.put("python.path", scriptFullPath.getParent());
+		PythonInterpreter.initialize(System.getProperties(), postProperties, new String[] {""});
+		// registry.putAll(postProperties);
+		try (PythonInterpreter interpreter = new PythonInterpreter()) {
+			interpreter.setErr(System.err);
+			interpreter.setOut(System.out);
+			interpreter.execfile(scriptFullPath.getAbsolutePath());
+		}
 	}
 }
